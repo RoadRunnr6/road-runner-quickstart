@@ -21,6 +21,8 @@ public class mainCodeV1 extends LinearOpMode {
     private DcMotor backLeft;
     private DcMotor frontLeft;
     private DcMotor arm;
+
+    private DcMotor intakeMotor;
     private DcMotor verticalExtender;
     private ColorSensor colorDetector;
     private Servo clawServo;
@@ -43,6 +45,7 @@ public class mainCodeV1 extends LinearOpMode {
     private double clawYPos = 0.5; //uses this value to set the initial claw position in the middle of the max and min
     //i am using a variable because .getPosition() only returns the last position the servo was told to move, not its actual location\
 
+    boolean isAutoPositioning = false;
 
     private void hardwareMapping() {
         imu = hardwareMap.get(IMU.class, "imu");
@@ -55,19 +58,26 @@ public class mainCodeV1 extends LinearOpMode {
         clawServo = hardwareMap.get(Servo.class, "clawServo"); //add a servo onto the robot just to make sure this works (idk if this will error without one)
         verticalExtender = hardwareMap.get(DcMotor.class, "verticalExtender");
         bucketServo = hardwareMap.get(Servo.class, "bucketServo");
+        intakeMotor = hardwareMap.get(DcMotor.class, "intakeMotor");
+
     }
 
     private void armSetup() {
         arm.setPower(1);
         ARMMIN = arm.getCurrentPosition() - 3;
+        //was 3000
         ARMMAX = ARMMIN - 3000;
         INCREMENT = 250;
     }
 
     private void extenderSetup() {
         verticalExtender.setPower(1);
+
         EXTENDERMIN = verticalExtender.getCurrentPosition();
-        EXTENDERMAX = EXTENDERMIN - 4000;
+
+        //was 4000
+
+        EXTENDERMAX = EXTENDERMIN - 4400;
     }
 
     private void setupServos() {
@@ -97,6 +107,8 @@ public class mainCodeV1 extends LinearOpMode {
 
         verticalExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         clawServo.setPosition(clawYPos);
     }
@@ -144,6 +156,8 @@ public class mainCodeV1 extends LinearOpMode {
 
 
 
+
+
         frontLeft.setPower(0.75 * frontLeftPower);
         backLeft.setPower(0.75 * backLeftPower);
         frontRight.setPower(0.75 * frontRightPower);
@@ -180,16 +194,18 @@ public class mainCodeV1 extends LinearOpMode {
     }
 
     private void bucketMovement(boolean down, boolean up, double increment) {
-        int max = 1;
-        int min = 0;
-        double bucketPosition = bucketServo.getPosition();
-        if (down) {
-            bucketPosition -= increment;
-        } else if (up) {
-            bucketPosition += increment;
+        if (!isAutoPositioning) {
+            int max = 1;
+            int min = 0;
+            double bucketPosition = bucketServo.getPosition();
+            if (down) {
+                bucketPosition -= increment;
+            } else if (up) {
+                bucketPosition += increment;
+            }
+            bucketPosition = clamp(bucketPosition, min, max);  //clamp the values to be between min and max
+            bucketServo.setPosition(bucketPosition);
         }
-        bucketPosition = clamp(bucketPosition, min, max);  //clamp the values to be between min and max
-        bucketServo.setPosition(bucketPosition);
     }
 
 
@@ -202,6 +218,18 @@ public class mainCodeV1 extends LinearOpMode {
         }
         clawPos = clamp(clawPos, servoMin, servoMax);  //clamp the values to be between min and max
         clawServo.setPosition(clawPos);
+    }
+
+    private void intakeMotorControl(float lTrigger, float rTrigger){
+        if (lTrigger > 0.5 || rTrigger > 0.5){
+            if (lTrigger > rTrigger) {
+                intakeMotor.setPower(1);
+            }else if (rTrigger > lTrigger){
+                intakeMotor.setPower(-1);
+            }
+        }else{
+            intakeMotor.setPower(0);
+        }
     }
 
     private void printThings() {
@@ -314,6 +342,7 @@ public class mainCodeV1 extends LinearOpMode {
             bucketMovement(gamepad1.left_bumper, gamepad1.right_bumper, SERVOINCREMENT);
             clawMovement(gamepad1.dpad_left, gamepad1.dpad_right, SERVOINCREMENT);
             verticalExtension(gamepad1.x); //gamepad1.x is assigned switchVerticalPosition where if that is true, we are switching whether the extender goes up or down, true is up and false is down
+            intakeMotorControl(gamepad1.left_trigger, gamepad1.right_trigger);
             printThings();
         }
     }
