@@ -58,7 +58,7 @@ public class mainCodeV1 extends LinearOpMode {
         clawServo = hardwareMap.get(Servo.class, "clawServo"); //add a servo onto the robot just to make sure this works (idk if this will error without one)
         verticalExtender = hardwareMap.get(DcMotor.class, "verticalExtender");
         bucketServo = hardwareMap.get(Servo.class, "bucketServo");
-        intakeMotor = hardwareMap.get(DcMotor.class, "intakeMotor");
+        intakeMotor = hardwareMap.get(DcMotor.class, "intake/parallel");
 
     }
 
