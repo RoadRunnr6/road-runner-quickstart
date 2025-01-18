@@ -13,6 +13,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.JavaUtil;
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import java.util.concurrent.TimeUnit;
 
@@ -256,7 +257,6 @@ public class redAutoLeft extends LinearOpMode {
     }
 
 
-
     private String colorDetection(ColorSensor colorDetector) {
         String[] colors = {"Yellow", "Blue", "Red"};
         String color = "";
@@ -376,7 +376,6 @@ public class redAutoLeft extends LinearOpMode {
     }
 
     public class Intake {
-        private DcMotorEx intakeMotor;
         private DcMotorEx horizontalExtender;
 
         private IMU imu;
@@ -399,18 +398,31 @@ public class redAutoLeft extends LinearOpMode {
             backRight = hardwareMap.get(DcMotor.class, "backRight");
             backLeft = hardwareMap.get(DcMotor.class, "backLeft");
             colorDetector = hardwareMap.get(ColorSensor.class, "colorDetector");
+            clawServo = hardwareMap.get(Servo.class, "clawServo");
         }
 
-        public class ActiveIntake implements Action {
+        public class ClawServoUp implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
-                intakeMotor.setPower(0.8);
+                clawServo.setPosition(1); //alter as necessary
                 return false;
             }
         }
 
-        public Action activeIntake() {
-            return new ActiveIntake();
+        public Action clawServoUp() {
+            return new ClawServoUp();
         }
+
+        public class ClawServoDown implements Action {
+            public boolean run(@NonNull TelemetryPacket packet) {
+                clawServo.setPosition(0); //alter as necessary
+                return false;
+            }
+        }
+
+        public Action clawServoDown() {
+            return new ClawServoDown();
+        }
+
 
         public class SearchColor implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
@@ -461,6 +473,7 @@ public class redAutoLeft extends LinearOpMode {
                 return false;
             }
         }
+
         public Action searchColor() {
             searchColorInit = false;
             return new SearchColor();
@@ -508,61 +521,64 @@ public class redAutoLeft extends LinearOpMode {
         Action thirdSpikeFirstHalf = spike3FirstHalf.build();
         Action thirdSpikeSecondHalf = spike3SecondHalf.build();
 
-
+        intakeMotor.setPower(0.8);
         Actions.runBlocking(
                 new SequentialAction(
                         firstSpikeFirstHalf,
-                        intake.activeIntake(),
                         firstSpikeSecondHalf,
-                        //bucket pick up w/ bucket funcs
-                        bucketMovement.bucketUp(),
+                        intake.clawServoUp()
+                ));
 
+        intakeMotor.setPower(0);
+        Actions.runBlocking(
+                new SequentialAction(
+                        bucketMovement.bucketUp(),
                         verticalExtender.moveUp(),
                         bucketMovement.bucketDown(),
                         verticalExtender.moveDown(),
+                        intake.clawServoDown(),
+                        bucketMovement.bucketUp()
+                ));
 
-
+        intakeMotor.setPower(0.8);
+        Actions.runBlocking(
+                new SequentialAction(
                         secondSpikeFirstHalf,
-                        intake.activeIntake(),
                         secondSpikeSecondHalf,
-                        //bucket pick up w/ bucket funcs
-                        bucketMovement.bucketUp(),
+                        intake.clawServoUp()
+                ));
 
+        intakeMotor.setPower(0);
+        Actions.runBlocking(
+                new SequentialAction(
+                        bucketMovement.bucketUp(),
                         verticalExtender.moveUp(),
                         bucketMovement.bucketDown(),
                         verticalExtender.moveDown(),
+                        intake.clawServoDown(),
+                        bucketMovement.bucketUp()
+                ));
 
-
+        intakeMotor.setPower(0.8);
+        Actions.runBlocking(
+                new SequentialAction(
                         thirdSpikeFirstHalf,
-                        intake.activeIntake(),
                         thirdSpikeSecondHalf,
-                        //bucket pick up w/ bucket funcs
-                        bucketMovement.bucketUp(),
+                        intake.clawServoUp()
+                ));
 
+        intakeMotor.setPower(0);
+        Actions.runBlocking(
+                new SequentialAction(
+                        bucketMovement.bucketUp(),
                         verticalExtender.moveUp(),
                         bucketMovement.bucketDown(),
-                        verticalExtender.moveDown()
-                )
-        );
+                        verticalExtender.moveDown(),
+                        intake.clawServoDown(),
+                        bucketMovement.bucketUp()
+                ));
 
-        while (opModeIsActive()) {
-            if (gamepad1.a && gamepad1.b) { //just press a and b together to start the search like it would in autonomous
-                double searchOrigin = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
-                while (searchColor(searchOrigin)) {
-                }
-            } else {
-                chassisMovement(gamepad1.left_stick_y, -gamepad1.left_stick_x, -gamepad1.right_stick_x);
-            }
-
-            armMovement(gamepad1.dpad_down, gamepad1.dpad_up, INCREMENT);
-            bucketMovement(gamepad1.left_bumper, gamepad1.right_bumper, SERVOINCREMENT);
-            clawMovement(gamepad1.dpad_left, gamepad1.dpad_right, SERVOINCREMENT);
-            verticalExtension(gamepad1.x); //gamepad1.x is assigned switchVerticalPosition where if that is true, we are switching whether the extender goes up or down, true is up and false is down
-            intakeMotorControl(gamepad2.left_bumper, gamepad2.right_bumper);
-            printThings();
-        }
     }
 }
-
 
 
