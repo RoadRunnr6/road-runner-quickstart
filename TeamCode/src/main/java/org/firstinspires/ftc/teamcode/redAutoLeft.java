@@ -140,15 +140,13 @@ public class redAutoLeft extends LinearOpMode {
 
         verticalExtender.setTargetPosition(verticalExtender.getCurrentPosition());
         verticalExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-
     }
 
     public double clamp(double value, double min, double max) {
         return Math.max(min, Math.min(max, value));
     }
 
-    private void chassisMovement(float y, float x, float t) {
+    private void chassisMovement(float y, float x, float t, IMU imu, DcMotor backLeft, DcMotor backRight, DcMotor frontLeft, DcMotor frontRight) {
         double botHeading;
         double rotX;
         double rotY;
@@ -157,9 +155,7 @@ public class redAutoLeft extends LinearOpMode {
         double backLeftPower;
         double frontRightPower;
         double backRightPower;
-        if (gamepad1.start) {
-            imu.resetYaw();
-        }
+
         botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
         rotX = x * Math.cos(-botHeading / 180 * Math.PI) - y * Math.sin(-botHeading / 180 * Math.PI);
         rotY = x * Math.sin(-botHeading / 180 * Math.PI) + y * Math.cos(-botHeading / 180 * Math.PI);
@@ -170,23 +166,21 @@ public class redAutoLeft extends LinearOpMode {
         frontRightPower = (rotY - (rotX + t)) / denominator;
         backRightPower = (rotY + (rotX - t)) / denominator;
 
-
         frontLeft.setPower(0.75 * frontLeftPower);
         backLeft.setPower(0.75 * backLeftPower);
         frontRight.setPower(0.75 * frontRightPower);
         backRight.setPower(0.75 * backRightPower);
-        clawServo.setPosition(clawYPos); //set servo position
     }
 
-    private void armMovement(boolean down, boolean up, int increment) {
-        int armPosition = arm.getCurrentPosition();
-        if (down) {       // if (DPAD-down) is being pressed and if not yet the min
-            armPosition += increment;   // Position in
-        } else if (up) {  // if (DPAD-up) is being pressed and if not yet max
-            armPosition -= increment;   // Position Out
+    private void intakeArmMovement(boolean in, boolean out, int increment, DcMotor horizontalExtender, double armMin, double armMax) {
+        int extenderPosition = horizontalExtender.getCurrentPosition();
+        if (in) {       // if (DPAD-down) is being pressed and if not yet the min
+            extenderPosition += increment;   // Position in
+        } else if (out) {  // if (DPAD-up) is being pressed and if not yet max
+            extenderPosition -= increment;   // Position Out
         }
-        armPosition = Math.max(Math.min(armPosition, ARMMIN), ARMMAX);  //clamp the values to be between min and max
-        arm.setTargetPosition(armPosition);
+        extenderPosition = Math.max(Math.min(extenderPosition, ARMMIN), ARMMAX);  //clamp the values to be between min and max
+        horizontalExtender.setTargetPosition(extenderPosition);
     }
 
     private void verticalExtension(boolean switchVerticalPosition) {
@@ -248,7 +242,7 @@ public class redAutoLeft extends LinearOpMode {
     }
 
     private void printThings() {
-        telemetry.addData("Color: ", colorDetection());
+        telemetry.addData("Color: ", colorDetection(colorDetector));
         telemetry.addData("difference", distanceBetweenAngles((float) imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES), 90f));
         telemetry.addData("Heading: ", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
         telemetry.addData("armPosition", arm.getCurrentPosition());
@@ -259,6 +253,41 @@ public class redAutoLeft extends LinearOpMode {
         telemetry.addData("lTrigger", gamepad2.left_bumper);
         telemetry.addData("rTrigger", gamepad2.right_bumper);
         telemetry.update();
+    }
+
+
+
+    private String colorDetection(ColorSensor colorDetector) {
+        String[] colors = {"Yellow", "Blue", "Red"};
+        String color = "";
+        float ratioGreenOverRed = ((float) colorDetector.green() / colorDetector.red());
+        float ratioBlueOverRed = ((float) colorDetector.blue() / colorDetector.red());
+
+        if ((ratioGreenOverRed >= 1.1 && ratioGreenOverRed <= 2.0) &&
+                (ratioBlueOverRed >= 0.1 && ratioBlueOverRed <= 0.8)) {
+            color = colors[0]; // Yellow
+        }
+        if ((ratioGreenOverRed >= 1.5 && ratioGreenOverRed <= 2.7) &&
+                (ratioBlueOverRed >= 2.0 && ratioBlueOverRed <= 10.0)) {
+            color = colors[1]; // Blue
+        }
+        if ((ratioGreenOverRed >= 0.2 && ratioGreenOverRed <= 1) &&
+                (ratioBlueOverRed >= 0.1 && ratioBlueOverRed <= 0.8)) {
+            color = colors[2]; // Red
+        }
+        return color;
+    }
+
+    private void rotateTo(double targetDegree, float maxRotationSpeed, IMU imu, DcMotor backLeft, DcMotor backRight, DcMotor frontLeft, DcMotor frontRight) {
+        double botHeading;
+        botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        float direction = distanceBetweenAngles((float) botHeading, (float) targetDegree);
+        float power = Math.max(Math.min(maxRotationSpeed, (float) (0.001 * Math.pow(direction, 2))), 0.225f); // 1 is clockwise, -1 is counterclock minimum is 0.1 (might need to be lower) and max is 0.5
+        if (Math.abs(direction) < 1f) {     // if the angle is less than 1 then poweroff
+            power = 0f;
+        }
+        power = direction < 0 ? power * -1 : power;
+        chassisMovement(0, 0, power, imu, backLeft, backRight, frontLeft, frontRight);
     }
 
     //rotation which way you need to turn, and how much you need to turn to get to target angle
@@ -348,15 +377,33 @@ public class redAutoLeft extends LinearOpMode {
 
     public class Intake {
         private DcMotorEx intakeMotor;
+        private DcMotorEx horizontalExtender;
+
+        private IMU imu;
+        private DcMotor frontRight;
+        private DcMotor backRight;
+        private DcMotor frontLeft;
+        private DcMotor backLeft;
         private boolean searchColorInit = false;
 
         public Intake(HardwareMap hardwareMap) {
-            intakeMotor = hardwareMap.get(DcMotorEx.class, "intakeMotor");
+            horizontalExtender = hardwareMap.get(DcMotorEx.class, "horizontalExtender");
+            horizontalExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            horizontalExtender.setTargetPosition(horizontalExtender.getCurrentPosition());
+            horizontalExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            intakeMotor = hardwareMap.get(DcMotorEx.class, "intake/parallel");
+            imu = hardwareMap.get(IMU.class, "imu");
+            frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
+            frontRight = hardwareMap.get(DcMotor.class, "frontRight");
+            backRight = hardwareMap.get(DcMotor.class, "backRight");
+            backLeft = hardwareMap.get(DcMotor.class, "backLeft");
+            colorDetector = hardwareMap.get(ColorSensor.class, "colorDetector");
         }
 
         public class ActiveIntake implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
-                verticalExtender.setTargetPosition(EXTENDERMAX);
+                intakeMotor.setPower(0.8);
                 return false;
             }
         }
@@ -367,27 +414,34 @@ public class redAutoLeft extends LinearOpMode {
 
         public class SearchColor implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
+                float VELOCITYTANGENTIAL = 1000;
+                int INCREMENT = 250;
+                float rotationSpeed;
+                double searchOrigin = 0;
+                double armMin = 0;
+                double armMax = 0;
+                int targetedAngle = 1;
                 if (!searchColorInit) {
-                    targetedAngle
-                            searchColorInit = true;
+                    armMin = horizontalExtender.getCurrentPosition() - 3;
+                    armMax = armMin - 2000;
+                    targetedAngle = 1;
+                    searchColorInit = true;
+                    searchOrigin = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
                 }
-                verticalExtender.setTargetPosition(EXTENDERMAX);
-                while (!(colorDetection().equals("Yellow") || colorDetection().equals("Red"))) {
+                while (!(colorDetection(colorDetector).equals("Yellow") || colorDetection(colorDetector).equals("Red"))) {
                     double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
                     float directionBetweenAngles = distanceBetweenAngles((float) botHeading, (float) (30 * targetedAngle + searchOrigin));
-                    float VELOCITYTANGENTIAL = 1000; //unsure what the units are for this
-                    float rotationSpeed;
-                    if (arm.getCurrentPosition() > -1000) {
+                    if (horizontalExtender.getCurrentPosition() > -500) { //might need to change values for 2-stage
                         rotationSpeed = 0.9f; //no easing in the beginning
                     } else {
                         rotationSpeed = (VELOCITYTANGENTIAL / (-(arm.getCurrentPosition() + 200))); //rotationSpeed (omega) = Vt/r where R is ARMMAX ~ 3000
                     }
                     int velocityArm = (int) (10 * ((215 * rotationSpeed) / (60f)));
-                    while (arm.getCurrentPosition() > -500) {
-                        armMovement(false, true, INCREMENT);
+                    while (horizontalExtender.getCurrentPosition() > -500) {
+                        intakeArmMovement(false, true, INCREMENT, horizontalExtender, armMax, armMin);
                     }
-                    armMovement(false, true, velocityArm);
-                    rotateTo((30 * targetedAngle) + searchOrigin, rotationSpeed);
+                    intakeArmMovement(false, true, velocityArm, horizontalExtender, armMax, armMin);
+                    rotateTo((30 * targetedAngle) + searchOrigin, rotationSpeed, imu, backLeft, backRight, frontLeft, frontRight);
                     if (Math.abs(directionBetweenAngles) < 4) { //determines if the robot is facing a direction
                         if (targetedAngle == 1) { //if it was turning one way, switch it
                             targetedAngle = -1;
@@ -396,85 +450,21 @@ public class redAutoLeft extends LinearOpMode {
                         }
                     }
                 }
-                return (arm.getCurrentPosition() >= ARMMAX + 100);
-            }
-                return false;
-        }
-    }
-
-
-    private boolean searchColor(double searchOrigin) throws InterruptedException {
-        double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
-        float directionBetweenAngles;
-        if (colorDetection().equals("Yellow") || colorDetection().equals("Red")) {
-            float power = -0.3f * targetedAngle;
-            TimeUnit.SECONDS.sleep(1);
-            while (!(colorDetection().equals("Yellow") || colorDetection().equals("Red"))) {
-                chassisMovement(0, 0, power);
-            }
-            return false;
-        } else {
-            directionBetweenAngles = distanceBetweenAngles((float) botHeading, (float) (30 * targetedAngle + searchOrigin));
-            float VELOCITYTANGENTIAL = 1000; //unsure what the units are for this
-            float rotationSpeed;
-            if (arm.getCurrentPosition() > -1000) {
-                rotationSpeed = 0.9f; //no easing in the beginning
-            } else {
-                rotationSpeed = (VELOCITYTANGENTIAL / (-(arm.getCurrentPosition() + 200))); //rotationSpeed (omega) = Vt/r where R is ARMMAX ~ 3000
-            }
-            int velocityArm = (int) (10 * ((215 * rotationSpeed) / (60f)));
-            while (arm.getCurrentPosition() > -500) {
-                armMovement(false, true, INCREMENT);
-            }
-            armMovement(false, true, velocityArm);
-            rotateTo((30 * targetedAngle) + searchOrigin, rotationSpeed);
-            if (Math.abs(directionBetweenAngles) < 4) { //determines if the robot is facing a direction
-                if (targetedAngle == 1) { //if it was turning one way, switch it
-                    targetedAngle = -1;
-                } else {
-                    targetedAngle = 1;
+                try {
+                    TimeUnit.SECONDS.sleep(1);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
                 }
+                while (!(colorDetection(colorDetector).equals("Yellow") || colorDetection(colorDetector).equals("Red"))) {
+                    chassisMovement(0, 0, (-0.3f * targetedAngle), imu, backLeft, backRight, frontLeft, frontRight);
+                }
+                return false;
             }
         }
-        return (arm.getCurrentPosition() >= ARMMAX + 100);
-        // extend arm if not already extended
-        // extend to stage 1. Closest 2. Medium 3. Far
-        // rotate x degrees
-        // if target color is detected then finish
-        // activate claw and pick up
-    }
-
-    private String colorDetection() {
-        String[] colors = {"Yellow", "Blue", "Red"};
-        String color = "";
-        float ratioGreenOverRed = ((float) colorDetector.green() / colorDetector.red());
-        float ratioBlueOverRed = ((float) colorDetector.blue() / colorDetector.red());
-
-        if ((ratioGreenOverRed >= 1.1 && ratioGreenOverRed <= 2.0) &&
-                (ratioBlueOverRed >= 0.1 && ratioBlueOverRed <= 0.8)) {
-            color = colors[0]; // Yellow
+        public Action searchColor() {
+            searchColorInit = false;
+            return new SearchColor();
         }
-        if ((ratioGreenOverRed >= 1.5 && ratioGreenOverRed <= 2.7) &&
-                (ratioBlueOverRed >= 2.0 && ratioBlueOverRed <= 10.0)) {
-            color = colors[1]; // Blue
-        }
-        if ((ratioGreenOverRed >= 0.2 && ratioGreenOverRed <= 1) &&
-                (ratioBlueOverRed >= 0.1 && ratioBlueOverRed <= 0.8)) {
-            color = colors[2]; // Red
-        }
-        return color;
-    }
-
-    private void rotateTo(double targetDegree, float maxRotationSpeed) {
-        double botHeading;
-        botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
-        float direction = distanceBetweenAngles((float) botHeading, (float) targetDegree);
-        float power = Math.max(Math.min(maxRotationSpeed, (float) (0.001 * Math.pow(direction, 2))), 0.225f); // 1 is clockwise, -1 is counterclock minimum is 0.1 (might need to be lower) and max is 0.5
-        if (Math.abs(direction) < 1f) {     // if the angle is less than 1 then poweroff
-            power = 0f;
-        }
-        power = direction < 0 ? power * -1 : power;
-        chassisMovement(0, 0, power);
     }
 
     @Override
@@ -573,3 +563,6 @@ public class redAutoLeft extends LinearOpMode {
         }
     }
 }
+
+
+
