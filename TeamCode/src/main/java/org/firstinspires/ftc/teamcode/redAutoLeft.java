@@ -28,124 +28,6 @@ import com.acmerobotics.roadrunner.ftc.Actions;
 
 @Autonomous(name = "redAuto", group = "Autonomous")
 public class redAutoLeft extends LinearOpMode {
-    // variable declaration
-    private IMU imu;
-    private DcMotor backRight;
-    private DcMotor frontRight;
-    private DcMotor backLeft;
-    private DcMotor frontLeft;
-    private DcMotor arm;
-
-    private DcMotor intakeMotor;
-    private DcMotor verticalExtender;
-    private ColorSensor colorDetector;
-    private Servo clawServo;
-    boolean verticalExtensionDirection = true;
-    boolean xPressed = false;
-    private Servo bucketServo;
-    int ARMMIN;
-    int ARMMAX;
-    int EXTENDERMIN;
-    int EXTENDERMAX;
-    int targetedAngle = 1; //for block search
-    double searchOrigin; //for block search
-    int INCREMENT;
-    double SERVOINCREMENT = 0.05;
-    //all servo positioning stuff is from 0 - 1 (decimals included) and not in radians / degrees for some reason, 0 is 0 degrees, 1 is 320 (or whatever the servo max is) degrees
-    //all our servos have 320 degrees of movement so i limited it so it wont collide with the arm too much
-    private double servoMax = 1; //maximum angle the claw servo is allowed to move
-    private double servoMin = 0; //minimum angle the claw servo is allowed to move
-
-    private double clawYPos = 0.5; //uses this value to set the initial claw position in the middle of the max and min
-    //i am using a variable because .getPosition() only returns the last position the servo was told to move, not its actual location\
-
-    boolean isAutoPositioning = false;
-
-
-    private void hardwareMapping() {
-        imu = hardwareMap.get(IMU.class, "imu");
-        backRight = hardwareMap.get(DcMotor.class, "backRight");
-        frontRight = hardwareMap.get(DcMotor.class, "frontRight");
-        backLeft = hardwareMap.get(DcMotor.class, "backLeft");
-        frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
-        arm = hardwareMap.get(DcMotor.class, "arm");
-        colorDetector = hardwareMap.get(ColorSensor.class, "colorDetector");
-        clawServo = hardwareMap.get(Servo.class, "clawServo"); //add a servo onto the robot just to make sure this works (idk if this will error without one)
-        verticalExtender = hardwareMap.get(DcMotor.class, "verticalExtender");
-        bucketServo = hardwareMap.get(Servo.class, "bucketServo");
-        intakeMotor = hardwareMap.get(DcMotor.class, "intakeMotor");
-
-    }
-
-    private void armSetup() {
-        arm.setPower(1);
-        ARMMIN = arm.getCurrentPosition() - 3;
-        //was 3000
-        ARMMAX = ARMMIN - 3000;
-        INCREMENT = 250;
-    }
-
-    private void extenderSetup() {
-        verticalExtender.setPower(1);
-
-        EXTENDERMIN = verticalExtender.getCurrentPosition();
-
-        //was 4000
-
-        EXTENDERMAX = EXTENDERMIN - 4400;
-    }
-
-
-    private void setupServos() {
-        bucketServo.setPosition(0.5);
-        clawServo.setPosition(0.5);
-    }
-
-    private void setupChassis() {
-        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.FORWARD)));
-        imu.resetYaw();
-
-        backRight.setDirection(DcMotor.Direction.REVERSE);
-        frontRight.setDirection(DcMotor.Direction.REVERSE);
-
-        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        verticalExtender.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-        verticalExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-        clawServo.setPosition(clawYPos);
-    }
-
-    private void initializeAndSetUp() {
-        hardwareMapping();
-        setupChassis();
-        armSetup();
-        extenderSetup();
-    }
-
-    private void postStartSetUp() {
-        arm.setTargetPosition(arm.getCurrentPosition());
-        arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        verticalExtender.setTargetPosition(verticalExtender.getCurrentPosition());
-        verticalExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-    }
-
-    public double clamp(double value, double min, double max) {
-        return Math.max(min, Math.min(max, value));
-    }
 
     private void chassisMovement(float y, float x, float t, IMU imu, DcMotor backLeft, DcMotor backRight, DcMotor frontLeft, DcMotor frontRight) {
         double botHeading;
@@ -180,82 +62,9 @@ public class redAutoLeft extends LinearOpMode {
         } else if (out) {  // if (DPAD-up) is being pressed and if not yet max
             extenderPosition -= increment;   // Position Out
         }
-        extenderPosition = Math.max(Math.min(extenderPosition, ARMMIN), ARMMAX);  //clamp the values to be between min and max
+        extenderPosition = Math.max(Math.min(extenderPosition, (int)armMin), (int)armMax);  //clamp the values to be between min and max
         horizontalExtender.setTargetPosition(extenderPosition);
     }
-
-    private void verticalExtension(boolean switchVerticalPosition) {
-
-        if (switchVerticalPosition) {
-            if (!xPressed) {
-                xPressed = true;
-                verticalExtensionDirection = !verticalExtensionDirection;
-                if (verticalExtensionDirection) { //true = up
-                    verticalExtender.setTargetPosition(EXTENDERMAX);
-                }
-                if (!verticalExtensionDirection) { //false = down
-                    verticalExtender.setTargetPosition(EXTENDERMIN);
-                }
-            }
-        } else {
-            xPressed = false;
-        }
-    }
-
-    private void bucketMovement(boolean down, boolean up, double increment) {
-        if (!isAutoPositioning) {
-            int max = 1;
-            int min = 0;
-            double bucketPosition = bucketServo.getPosition();
-            if (down) {
-                bucketPosition -= increment;
-            } else if (up) {
-                bucketPosition += increment;
-            }
-            bucketPosition = clamp(bucketPosition, min, max);  //clamp the values to be between min and max
-            bucketServo.setPosition(bucketPosition);
-        }
-    }
-
-
-    private void clawMovement(boolean down, boolean up, double increment) {
-        double clawPos = clawServo.getPosition();
-        if (down) {
-            clawPos -= increment;
-        } else if (up) {
-            clawPos += increment;
-        }
-        clawPos = clamp(clawPos, servoMin, servoMax);  //clamp the values to be between min and max
-        clawServo.setPosition(clawPos);
-    }
-
-    private void intakeMotorControl(boolean lTrigger, boolean rTrigger) {
-
-        if (lTrigger || rTrigger) {
-            if (lTrigger) {
-                intakeMotor.setPower(1);
-            } else if (rTrigger) {
-                intakeMotor.setPower(-1);
-            }
-        } else {
-            intakeMotor.setPower(0);
-        }
-    }
-
-    private void printThings() {
-        telemetry.addData("Color: ", colorDetection(colorDetector));
-        telemetry.addData("difference", distanceBetweenAngles((float) imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES), 90f));
-        telemetry.addData("Heading: ", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
-        telemetry.addData("armPosition", arm.getCurrentPosition());
-        telemetry.addData("armMax", ARMMAX);
-        telemetry.addData("claw angle: ", clawServo.getPosition());
-        telemetry.addData("bucket postion:", bucketServo.getPosition());
-        telemetry.addData("VerticalExtenderFromPrintFunc:", verticalExtender.getCurrentPosition());
-        telemetry.addData("lTrigger", gamepad2.left_bumper);
-        telemetry.addData("rTrigger", gamepad2.right_bumper);
-        telemetry.update();
-    }
-
 
     private String colorDetection(ColorSensor colorDetector) {
         String[] colors = {"Yellow", "Blue", "Red"};
@@ -293,8 +102,7 @@ public class redAutoLeft extends LinearOpMode {
     //rotation which way you need to turn, and how much you need to turn to get to target angle
     private float distanceBetweenAngles(float alpha, float beta) {
         float phi = (beta - alpha) % 360; // Raw difference in range [-359, 359]
-        float distance = phi > 180 ? phi - 360 : (phi < -180 ? phi + 360 : phi);
-        return distance;
+        return phi > 180 ? phi - 360 : (phi < -180 ? phi + 360 : phi);
     }
 
 
@@ -332,6 +140,7 @@ public class redAutoLeft extends LinearOpMode {
         private DcMotorEx verticalExtender;
         private boolean initialized = false;
         int EXTENDERMIN;
+        int EXTENDERMAX;
 
         public VerticalExtension(HardwareMap hardwareMap) {
             verticalExtender = hardwareMap.get(DcMotorEx.class, "verticalExtender");
@@ -344,10 +153,10 @@ public class redAutoLeft extends LinearOpMode {
             public boolean run(@NonNull TelemetryPacket packet) {
                 if (!initialized) {
                     verticalExtender.setPower(0.8);
+                    EXTENDERMIN = verticalExtender.getCurrentPosition();
+                    EXTENDERMAX = EXTENDERMIN - 4400;
                     initialized = true;
                 }
-                EXTENDERMIN = verticalExtender.getCurrentPosition();
-                EXTENDERMAX = EXTENDERMIN - 4400;
                 verticalExtender.setTargetPosition(EXTENDERMAX);
                 return false;
             }
@@ -377,12 +186,15 @@ public class redAutoLeft extends LinearOpMode {
 
     public class Intake {
         private DcMotorEx horizontalExtender;
-
         private IMU imu;
         private DcMotor frontRight;
         private DcMotor backRight;
         private DcMotor frontLeft;
         private DcMotor backLeft;
+        private ColorSensor colorDetector;
+        private Servo clawServo;
+
+
         private boolean searchColorInit = false;
 
         public Intake(HardwareMap hardwareMap) {
@@ -391,7 +203,6 @@ public class redAutoLeft extends LinearOpMode {
             horizontalExtender.setTargetPosition(horizontalExtender.getCurrentPosition());
             horizontalExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-            intakeMotor = hardwareMap.get(DcMotorEx.class, "intake/parallel");
             imu = hardwareMap.get(IMU.class, "imu");
             frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
             frontRight = hardwareMap.get(DcMotor.class, "frontRight");
@@ -446,7 +257,7 @@ public class redAutoLeft extends LinearOpMode {
                     if (horizontalExtender.getCurrentPosition() > -500) { //might need to change values for 2-stage
                         rotationSpeed = 0.9f; //no easing in the beginning
                     } else {
-                        rotationSpeed = (VELOCITYTANGENTIAL / (-(arm.getCurrentPosition() + 200))); //rotationSpeed (omega) = Vt/r where R is ARMMAX ~ 3000
+                        rotationSpeed = (VELOCITYTANGENTIAL / (-(horizontalExtender.getCurrentPosition() + 200))); //rotationSpeed (omega) = Vt/r where R is ARMMAX ~ 3000
                     }
                     int velocityArm = (int) (10 * ((215 * rotationSpeed) / (60f)));
                     while (horizontalExtender.getCurrentPosition() > -500) {
@@ -482,9 +293,8 @@ public class redAutoLeft extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        initializeAndSetUp();
         waitForStart();
-        postStartSetUp();
+        DcMotor intakeMotor = hardwareMap.get(DcMotorEx.class, "intake/parallel");
         Pose2d initialPose = new Pose2d(-32, -61, Math.toRadians(90));
         Pose2d afterDrop = new Pose2d(-48, -48, Math.toRadians(90));
         MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);
@@ -577,8 +387,5 @@ public class redAutoLeft extends LinearOpMode {
                         intake.clawServoDown(),
                         bucketMovement.bucketUp()
                 ));
-
     }
 }
-
-
