@@ -368,7 +368,7 @@ public class redAutoLeft extends LinearOpMode {
             public boolean run(@NonNull TelemetryPacket packet) {
                 if (!searchColorInit) {
                     targetedAngle
-                    searchColorInit = true;
+                            searchColorInit = true;
                 }
                 verticalExtender.setTargetPosition(EXTENDERMAX);
                 while (!(colorDetection().equals("Yellow") || colorDetection().equals("Red"))) {
@@ -396,178 +396,177 @@ public class redAutoLeft extends LinearOpMode {
                     }
                 }
                 return (arm.getCurrentPosition() >= ARMMAX + 100);
-                }
+            }
                 return false;
-            }
         }
     }
+}
 
-    private boolean searchColor(double searchOrigin) throws InterruptedException {
-        double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
-        float directionBetweenAngles;
-        if (colorDetection().equals("Yellow") || colorDetection().equals("Red")) {
-            float power = -0.3f*targetedAngle;
-            TimeUnit.SECONDS.sleep(1);
-            while (!(colorDetection().equals("Yellow") || colorDetection().equals("Red"))) {
-                chassisMovement(0,0, power);
-            }
-            return false;
+private boolean searchColor(double searchOrigin) throws InterruptedException {
+    double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+    float directionBetweenAngles;
+    if (colorDetection().equals("Yellow") || colorDetection().equals("Red")) {
+        float power = -0.3f*targetedAngle;
+        TimeUnit.SECONDS.sleep(1);
+        while (!(colorDetection().equals("Yellow") || colorDetection().equals("Red"))) {
+            chassisMovement(0,0, power);
+        }
+        return false;
+    } else {
+        directionBetweenAngles = distanceBetweenAngles((float)botHeading, (float)(30*targetedAngle + searchOrigin));
+        float VELOCITYTANGENTIAL = 1000; //unsure what the units are for this
+        float rotationSpeed;
+        if (arm.getCurrentPosition() > -1000) {
+            rotationSpeed = 0.9f; //no easing in the beginning
         } else {
-            directionBetweenAngles = distanceBetweenAngles((float)botHeading, (float)(30*targetedAngle + searchOrigin));
-            float VELOCITYTANGENTIAL = 1000; //unsure what the units are for this
-            float rotationSpeed;
-            if (arm.getCurrentPosition() > -1000) {
-                rotationSpeed = 0.9f; //no easing in the beginning
+            rotationSpeed = (VELOCITYTANGENTIAL/(-(arm.getCurrentPosition() + 200))); //rotationSpeed (omega) = Vt/r where R is ARMMAX ~ 3000
+        }
+        int velocityArm = (int)(10 * ((215 * rotationSpeed)/(60f)));
+        while (arm.getCurrentPosition() > -500) {
+            armMovement(false, true, INCREMENT);
+        }
+        armMovement(false, true, velocityArm);
+        rotateTo((30*targetedAngle) + searchOrigin, rotationSpeed);
+        if (Math.abs(directionBetweenAngles) < 4) { //determines if the robot is facing a direction
+            if (targetedAngle == 1) { //if it was turning one way, switch it
+                targetedAngle = -1;
             } else {
-                rotationSpeed = (VELOCITYTANGENTIAL/(-(arm.getCurrentPosition() + 200))); //rotationSpeed (omega) = Vt/r where R is ARMMAX ~ 3000
-            }
-            int velocityArm = (int)(10 * ((215 * rotationSpeed)/(60f)));
-            while (arm.getCurrentPosition() > -500) {
-                armMovement(false, true, INCREMENT);
-            }
-            armMovement(false, true, velocityArm);
-            rotateTo((30*targetedAngle) + searchOrigin, rotationSpeed);
-            if (Math.abs(directionBetweenAngles) < 4) { //determines if the robot is facing a direction
-                if (targetedAngle == 1) { //if it was turning one way, switch it
-                    targetedAngle = -1;
-                } else {
-                    targetedAngle = 1;
-                }
+                targetedAngle = 1;
             }
         }
-        return (arm.getCurrentPosition() >= ARMMAX + 100);
-        // extend arm if not already extended
-        // extend to stage 1. Closest 2. Medium 3. Far
-        // rotate x degrees
-        // if target color is detected then finish
-        // activate claw and pick up
     }
+    return (arm.getCurrentPosition() >= ARMMAX + 100);
+    // extend arm if not already extended
+    // extend to stage 1. Closest 2. Medium 3. Far
+    // rotate x degrees
+    // if target color is detected then finish
+    // activate claw and pick up
+}
 
-    private String colorDetection() {
-        String[] colors = {"Yellow", "Blue", "Red"};
-        String color = "";
-        float ratioGreenOverRed = ((float)colorDetector.green() / colorDetector.red());
-        float ratioBlueOverRed = ((float)colorDetector.blue() / colorDetector.red());
+private String colorDetection() {
+    String[] colors = {"Yellow", "Blue", "Red"};
+    String color = "";
+    float ratioGreenOverRed = ((float)colorDetector.green() / colorDetector.red());
+    float ratioBlueOverRed = ((float)colorDetector.blue() / colorDetector.red());
 
-        if ((ratioGreenOverRed >= 1.1 && ratioGreenOverRed <= 2.0) &&
-                (ratioBlueOverRed >= 0.1 && ratioBlueOverRed <= 0.8)) {
-            color = colors[0]; // Yellow
-        }
-        if ((ratioGreenOverRed >= 1.5 && ratioGreenOverRed <= 2.7) &&
-                (ratioBlueOverRed >= 2.0 && ratioBlueOverRed <= 10.0)) {
-            color = colors[1]; // Blue
-        }
-        if ((ratioGreenOverRed >= 0.2 && ratioGreenOverRed <= 1) &&
-                (ratioBlueOverRed >= 0.1 && ratioBlueOverRed <= 0.8)) {
-            color = colors[2]; // Red
-        }
-        return color;
+    if ((ratioGreenOverRed >= 1.1 && ratioGreenOverRed <= 2.0) &&
+            (ratioBlueOverRed >= 0.1 && ratioBlueOverRed <= 0.8)) {
+        color = colors[0]; // Yellow
     }
-
-    private void rotateTo(double targetDegree, float maxRotationSpeed) {
-        double botHeading;
-        botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
-        float direction = distanceBetweenAngles((float)botHeading, (float)targetDegree);
-        float power = Math.max(Math.min(maxRotationSpeed, (float)(0.001 * Math.pow(direction, 2))), 0.225f); // 1 is clockwise, -1 is counterclock minimum is 0.1 (might need to be lower) and max is 0.5
-        if (Math.abs(direction) < 1f) {     // if the angle is less than 1 then poweroff
-            power = 0f;
-        }
-        power = direction < 0 ? power * -1: power;
-        chassisMovement(0,0, power);
+    if ((ratioGreenOverRed >= 1.5 && ratioGreenOverRed <= 2.7) &&
+            (ratioBlueOverRed >= 2.0 && ratioBlueOverRed <= 10.0)) {
+        color = colors[1]; // Blue
     }
-    @Override
-    public void runOpMode() throws InterruptedException {
-        initializeAndSetUp();
-        waitForStart();
-        postStartSetUp();
-        Pose2d initialPose = new Pose2d(-32, -61, Math.toRadians(90));
-        Pose2d afterDrop = new Pose2d(-48, -48, Math.toRadians(90));
-        MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);
-        Intake intake = new Intake(hardwareMap);
-        BucketMovement bucketMovement = new BucketMovement(hardwareMap);
-        VerticalExtension verticalExtender = new VerticalExtension(hardwareMap);
+    if ((ratioGreenOverRed >= 0.2 && ratioGreenOverRed <= 1) &&
+            (ratioBlueOverRed >= 0.1 && ratioBlueOverRed <= 0.8)) {
+        color = colors[2]; // Red
+    }
+    return color;
+}
 
-        TrajectoryActionBuilder spike1FirstHalf = drive.actionBuilder(initialPose)
+private void rotateTo(double targetDegree, float maxRotationSpeed) {
+    double botHeading;
+    botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+    float direction = distanceBetweenAngles((float)botHeading, (float)targetDegree);
+    float power = Math.max(Math.min(maxRotationSpeed, (float)(0.001 * Math.pow(direction, 2))), 0.225f); // 1 is clockwise, -1 is counterclock minimum is 0.1 (might need to be lower) and max is 0.5
+    if (Math.abs(direction) < 1f) {     // if the angle is less than 1 then poweroff
+        power = 0f;
+    }
+    power = direction < 0 ? power * -1: power;
+    chassisMovement(0,0, power);
+}
+@Override
+public void runOpMode() throws InterruptedException {
+    initializeAndSetUp();
+    waitForStart();
+    postStartSetUp();
+    Pose2d initialPose = new Pose2d(-32, -61, Math.toRadians(90));
+    Pose2d afterDrop = new Pose2d(-48, -48, Math.toRadians(90));
+    MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);
+    Intake intake = new Intake(hardwareMap);
+    BucketMovement bucketMovement = new BucketMovement(hardwareMap);
+    VerticalExtension verticalExtender = new VerticalExtension(hardwareMap);
+
+    TrajectoryActionBuilder spike1FirstHalf = drive.actionBuilder(initialPose)
             .splineTo(new Vector2d(-38, -15), 3*(Math.PI / 2))
             .splineTo(new Vector2d(-38, -24), Math.toRadians(270));
 
-        TrajectoryActionBuilder spike1SecondHalf = drive.actionBuilder(new Pose2d(-38, -24, Math.toRadians(270)))
+    TrajectoryActionBuilder spike1SecondHalf = drive.actionBuilder(new Pose2d(-38, -24, Math.toRadians(270)))
             .splineTo(new Vector2d(-48, -48), Math.toRadians(225));
 
-        TrajectoryActionBuilder spike2FirstHalf = drive.actionBuilder(afterDrop)
+    TrajectoryActionBuilder spike2FirstHalf = drive.actionBuilder(afterDrop)
             .splineTo(new Vector2d(-60, -15), 3*(Math.PI / 2))
             .splineTo(new Vector2d(-60, -24), Math.toRadians(270));
 
-        TrajectoryActionBuilder spike2SecondHalf = drive.actionBuilder(new Pose2d(-60, -24, Math.toRadians(270)))
+    TrajectoryActionBuilder spike2SecondHalf = drive.actionBuilder(new Pose2d(-60, -24, Math.toRadians(270)))
             .splineTo(new Vector2d(-48, -48), Math.toRadians(225));
 
-        TrajectoryActionBuilder spike3FirstHalf = drive.actionBuilder(afterDrop)
-             .splineTo(new Vector2d(-61, -15), Math.toRadians(200))
-             .splineTo(new Vector2d(-61, -24), Math.toRadians(200));
+    TrajectoryActionBuilder spike3FirstHalf = drive.actionBuilder(afterDrop)
+            .splineTo(new Vector2d(-61, -15), Math.toRadians(200))
+            .splineTo(new Vector2d(-61, -24), Math.toRadians(200));
 
-        TrajectoryActionBuilder spike3SecondHalf = drive.actionBuilder(new Pose2d(-61, -24, Math.toRadians(200)))
-             .splineTo(new Vector2d(-48, -48), Math.toRadians(225));
-
-
-        Action firstSpikeFirstHalf = spike1FirstHalf.build();
-        Action firstSpikeSecondHalf = spike1SecondHalf.build();
-        Action secondSpikeFirstHalf = spike2FirstHalf.build();
-        Action secondSpikeSecondHalf = spike2SecondHalf.build();
-        Action thirdSpikeFirstHalf = spike3FirstHalf.build();
-        Action thirdSpikeSecondHalf = spike3SecondHalf.build();
+    TrajectoryActionBuilder spike3SecondHalf = drive.actionBuilder(new Pose2d(-61, -24, Math.toRadians(200)))
+            .splineTo(new Vector2d(-48, -48), Math.toRadians(225));
 
 
-        Actions.runBlocking(
-                new SequentialAction(
-                        firstSpikeFirstHalf,
-                        intake.activeIntake(),
-                        firstSpikeSecondHalf,
-                        //bucket pick up w/ bucket funcs
-                        bucketMovement.bucketUp(),
-
-                        verticalExtender.moveUp(),
-                        bucketMovement.bucketDown(),
-                        verticalExtender.moveDown(),
+    Action firstSpikeFirstHalf = spike1FirstHalf.build();
+    Action firstSpikeSecondHalf = spike1SecondHalf.build();
+    Action secondSpikeFirstHalf = spike2FirstHalf.build();
+    Action secondSpikeSecondHalf = spike2SecondHalf.build();
+    Action thirdSpikeFirstHalf = spike3FirstHalf.build();
+    Action thirdSpikeSecondHalf = spike3SecondHalf.build();
 
 
-                        secondSpikeFirstHalf,
-                        intake.activeIntake(),
-                        secondSpikeSecondHalf,
-                        //bucket pick up w/ bucket funcs
-                        bucketMovement.bucketUp(),
+    Actions.runBlocking(
+            new SequentialAction(
+                    firstSpikeFirstHalf,
+                    intake.activeIntake(),
+                    firstSpikeSecondHalf,
+                    //bucket pick up w/ bucket funcs
+                    bucketMovement.bucketUp(),
 
-                        verticalExtender.moveUp(),
-                        bucketMovement.bucketDown(),
-                        verticalExtender.moveDown(),
+                    verticalExtender.moveUp(),
+                    bucketMovement.bucketDown(),
+                    verticalExtender.moveDown(),
 
 
-                        thirdSpikeFirstHalf,
-                        intake.activeIntake(),
-                        thirdSpikeSecondHalf,
-                        //bucket pick up w/ bucket funcs
-                        bucketMovement.bucketUp(),
+                    secondSpikeFirstHalf,
+                    intake.activeIntake(),
+                    secondSpikeSecondHalf,
+                    //bucket pick up w/ bucket funcs
+                    bucketMovement.bucketUp(),
 
-                        verticalExtender.moveUp(),
-                        bucketMovement.bucketDown(),
-                        verticalExtender.moveDown()
-                )
-            );
+                    verticalExtender.moveUp(),
+                    bucketMovement.bucketDown(),
+                    verticalExtender.moveDown(),
 
-        while (opModeIsActive()) {
-            if (gamepad1.a && gamepad1.b) { //just press a and b together to start the search like it would in autonomous
-                double searchOrigin = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
-                while (searchColor(searchOrigin)) {
-                }
-            } else {
-                chassisMovement(gamepad1.left_stick_y, -gamepad1.left_stick_x, -gamepad1.right_stick_x);
+
+                    thirdSpikeFirstHalf,
+                    intake.activeIntake(),
+                    thirdSpikeSecondHalf,
+                    //bucket pick up w/ bucket funcs
+                    bucketMovement.bucketUp(),
+
+                    verticalExtender.moveUp(),
+                    bucketMovement.bucketDown(),
+                    verticalExtender.moveDown()
+            )
+    );
+
+    while (opModeIsActive()) {
+        if (gamepad1.a && gamepad1.b) { //just press a and b together to start the search like it would in autonomous
+            double searchOrigin = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+            while (searchColor(searchOrigin)) {
             }
-
-            armMovement(gamepad1.dpad_down,gamepad1.dpad_up,INCREMENT);
-            bucketMovement(gamepad1.left_bumper, gamepad1.right_bumper, SERVOINCREMENT);
-            clawMovement(gamepad1.dpad_left, gamepad1.dpad_right, SERVOINCREMENT);
-            verticalExtension(gamepad1.x); //gamepad1.x is assigned switchVerticalPosition where if that is true, we are switching whether the extender goes up or down, true is up and false is down
-            intakeMotorControl(gamepad2.left_bumper, gamepad2.right_bumper);
-            printThings();
+        } else {
+            chassisMovement(gamepad1.left_stick_y, -gamepad1.left_stick_x, -gamepad1.right_stick_x);
         }
+
+        armMovement(gamepad1.dpad_down,gamepad1.dpad_up,INCREMENT);
+        bucketMovement(gamepad1.left_bumper, gamepad1.right_bumper, SERVOINCREMENT);
+        clawMovement(gamepad1.dpad_left, gamepad1.dpad_right, SERVOINCREMENT);
+        verticalExtension(gamepad1.x); //gamepad1.x is assigned switchVerticalPosition where if that is true, we are switching whether the extender goes up or down, true is up and false is down
+        intakeMotorControl(gamepad2.left_bumper, gamepad2.right_bumper);
+        printThings();
     }
 }
