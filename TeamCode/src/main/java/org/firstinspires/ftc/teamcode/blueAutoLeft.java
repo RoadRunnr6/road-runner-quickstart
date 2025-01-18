@@ -3,7 +3,6 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
@@ -13,8 +12,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import java.util.concurrent.TimeUnit;
 
 
-@Autonomous(name = "redAuto", group = "Autonomous")
-public class redAuto extends LinearOpMode {
+@Autonomous(name = "blueAuto", group = "Autonomous")
+public class blueAutoLeft extends LinearOpMode {
     // variable declaration
     private IMU imu;
     private DcMotor backRight;

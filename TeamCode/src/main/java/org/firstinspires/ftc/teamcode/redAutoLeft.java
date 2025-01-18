@@ -1,20 +1,32 @@
 package org.firstinspires.ftc.teamcode;
 
+import androidx.annotation.NonNull;
+
+import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.JavaUtil;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import java.util.concurrent.TimeUnit;
 
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.SequentialAction;
+import com.acmerobotics.roadrunner.Vector2d;
+import com.acmerobotics.roadrunner.ftc.Actions;
 
-@Autonomous(name = "blueAuto", group = "Autonomous")
-public class blueAuto extends LinearOpMode {
+
+
+@Autonomous(name = "redAuto", group = "Autonomous")
+public class redAutoLeft extends LinearOpMode {
     // variable declaration
     private IMU imu;
     private DcMotor backRight;
@@ -47,6 +59,8 @@ public class blueAuto extends LinearOpMode {
     //i am using a variable because .getPosition() only returns the last position the servo was told to move, not its actual location\
 
     boolean isAutoPositioning = false;
+
+
 
     private void hardwareMapping() {
         imu = hardwareMap.get(IMU.class, "imu");
@@ -131,7 +145,7 @@ public class blueAuto extends LinearOpMode {
 
     }
 
-    public static double clamp(double value, double min, double max) {
+    public double clamp(double value, double min, double max) {
         return Math.max(min, Math.min(max, value));
     }
 
@@ -257,6 +271,137 @@ public class blueAuto extends LinearOpMode {
         return distance;
     }
 
+
+
+
+    public class BucketMovement {
+        private Servo bucketServo;
+
+        public BucketMovement(HardwareMap hardwareMap) {
+            bucketServo = hardwareMap.get(Servo.class, "bucketServo");
+        }
+
+        public class BucketUp implements Action {
+            public boolean run(@NonNull TelemetryPacket packet) {
+                bucketServo.setPosition(1); //alter as necessary
+                return false;
+            }
+        }
+        public Action bucketUp() {
+            return new BucketUp();
+        }
+
+        public class BucketDown implements Action {
+            public boolean run(@NonNull TelemetryPacket packet) {
+                bucketServo.setPosition(0); //alter as necessary
+                return false;
+            }
+        }
+        public Action bucketDown() {
+            return new BucketDown();
+        }
+    }
+
+    public class VerticalExtension {
+        private DcMotorEx verticalExtender;
+        private boolean initialized = false;
+        int EXTENDERMIN;
+
+        public VerticalExtension(HardwareMap hardwareMap) {
+            verticalExtender = hardwareMap.get(DcMotorEx.class, "verticalExtender");
+            verticalExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            verticalExtender.setTargetPosition(verticalExtender.getCurrentPosition());
+            verticalExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        }
+
+        public class MoveUp implements Action {
+            public boolean run(@NonNull TelemetryPacket packet) {
+                if (!initialized) {
+                    verticalExtender.setPower(0.8);
+                    initialized = true;
+                }
+                EXTENDERMIN = verticalExtender.getCurrentPosition();
+                EXTENDERMAX = EXTENDERMIN - 4400;
+                verticalExtender.setTargetPosition(EXTENDERMAX);
+                return false;
+            }
+        }
+        public Action moveUp() {
+            initialized = false;
+            return new MoveDown();
+        }
+
+        public class MoveDown implements Action {
+            public boolean run(@NonNull TelemetryPacket packet) {
+                if (!initialized) {
+                    verticalExtender.setPower(0.8);
+                    initialized = true;
+                }
+                verticalExtender.setTargetPosition(EXTENDERMIN);
+                return false;
+            }
+        }
+        public Action moveDown() {
+            initialized = false;
+            return new MoveDown();
+        }
+    }
+
+    public class Intake {
+        private DcMotorEx intakeMotor;
+        private boolean searchColorInit = false;
+        public Intake(HardwareMap hardwareMap) {
+            intakeMotor = hardwareMap.get(DcMotorEx.class, "intakeMotor");
+        }
+
+        public class ActiveIntake implements Action {
+            public boolean run(@NonNull TelemetryPacket packet) {
+                verticalExtender.setTargetPosition(EXTENDERMAX);
+                return false;
+            }
+        }
+        public Action activeIntake() {
+            return new ActiveIntake();
+        }
+
+        public class SearchColor implements Action {
+            public boolean run(@NonNull TelemetryPacket packet) {
+                if (!searchColorInit) {
+                    targetedAngle
+                    searchColorInit = true;
+                }
+                verticalExtender.setTargetPosition(EXTENDERMAX);
+                while (!(colorDetection().equals("Yellow") || colorDetection().equals("Red"))) {
+                    double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+                    float directionBetweenAngles = distanceBetweenAngles((float)botHeading, (float)(30*targetedAngle + searchOrigin));
+                    float VELOCITYTANGENTIAL = 1000; //unsure what the units are for this
+                    float rotationSpeed;
+                    if (arm.getCurrentPosition() > -1000) {
+                        rotationSpeed = 0.9f; //no easing in the beginning
+                    } else {
+                        rotationSpeed = (VELOCITYTANGENTIAL/(-(arm.getCurrentPosition() + 200))); //rotationSpeed (omega) = Vt/r where R is ARMMAX ~ 3000
+                    }
+                    int velocityArm = (int)(10 * ((215 * rotationSpeed)/(60f)));
+                    while (arm.getCurrentPosition() > -500) {
+                        armMovement(false, true, INCREMENT);
+                    }
+                    armMovement(false, true, velocityArm);
+                    rotateTo((30*targetedAngle) + searchOrigin, rotationSpeed);
+                    if (Math.abs(directionBetweenAngles) < 4) { //determines if the robot is facing a direction
+                        if (targetedAngle == 1) { //if it was turning one way, switch it
+                            targetedAngle = -1;
+                        } else {
+                            targetedAngle = 1;
+                        }
+                    }
+                }
+                return (arm.getCurrentPosition() >= ARMMAX + 100);
+                }
+                return false;
+            }
+        }
+    }
+
     private boolean searchColor(double searchOrigin) throws InterruptedException {
         double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
         float directionBetweenAngles;
@@ -335,6 +480,79 @@ public class blueAuto extends LinearOpMode {
         initializeAndSetUp();
         waitForStart();
         postStartSetUp();
+        Pose2d initialPose = new Pose2d(-32, -61, Math.toRadians(90));
+        Pose2d afterDrop = new Pose2d(-48, -48, Math.toRadians(90));
+        MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);
+        Intake intake = new Intake(hardwareMap);
+        BucketMovement bucketMovement = new BucketMovement(hardwareMap);
+        VerticalExtension verticalExtender = new VerticalExtension(hardwareMap);
+
+        TrajectoryActionBuilder spike1FirstHalf = drive.actionBuilder(initialPose)
+            .splineTo(new Vector2d(-38, -15), 3*(Math.PI / 2))
+            .splineTo(new Vector2d(-38, -24), Math.toRadians(270));
+
+        TrajectoryActionBuilder spike1SecondHalf = drive.actionBuilder(new Pose2d(-38, -24, Math.toRadians(270)))
+            .splineTo(new Vector2d(-48, -48), Math.toRadians(225));
+
+        TrajectoryActionBuilder spike2FirstHalf = drive.actionBuilder(afterDrop)
+            .splineTo(new Vector2d(-60, -15), 3*(Math.PI / 2))
+            .splineTo(new Vector2d(-60, -24), Math.toRadians(270));
+
+        TrajectoryActionBuilder spike2SecondHalf = drive.actionBuilder(new Pose2d(-60, -24, Math.toRadians(270)))
+            .splineTo(new Vector2d(-48, -48), Math.toRadians(225));
+
+        TrajectoryActionBuilder spike3FirstHalf = drive.actionBuilder(afterDrop)
+             .splineTo(new Vector2d(-61, -15), Math.toRadians(200))
+             .splineTo(new Vector2d(-61, -24), Math.toRadians(200));
+
+        TrajectoryActionBuilder spike3SecondHalf = drive.actionBuilder(new Pose2d(-61, -24, Math.toRadians(200)))
+             .splineTo(new Vector2d(-48, -48), Math.toRadians(225));
+
+
+        Action firstSpikeFirstHalf = spike1FirstHalf.build();
+        Action firstSpikeSecondHalf = spike1SecondHalf.build();
+        Action secondSpikeFirstHalf = spike2FirstHalf.build();
+        Action secondSpikeSecondHalf = spike2SecondHalf.build();
+        Action thirdSpikeFirstHalf = spike3FirstHalf.build();
+        Action thirdSpikeSecondHalf = spike3SecondHalf.build();
+
+
+        Actions.runBlocking(
+                new SequentialAction(
+                        firstSpikeFirstHalf,
+                        intake.activeIntake(),
+                        firstSpikeSecondHalf,
+                        //bucket pick up w/ bucket funcs
+                        bucketMovement.bucketUp(),
+
+                        verticalExtender.moveUp(),
+                        bucketMovement.bucketDown(),
+                        verticalExtender.moveDown(),
+
+
+                        secondSpikeFirstHalf,
+                        intake.activeIntake(),
+                        secondSpikeSecondHalf,
+                        //bucket pick up w/ bucket funcs
+                        bucketMovement.bucketUp(),
+
+                        verticalExtender.moveUp(),
+                        bucketMovement.bucketDown(),
+                        verticalExtender.moveDown(),
+
+
+                        thirdSpikeFirstHalf,
+                        intake.activeIntake(),
+                        thirdSpikeSecondHalf,
+                        //bucket pick up w/ bucket funcs
+                        bucketMovement.bucketUp(),
+
+                        verticalExtender.moveUp(),
+                        bucketMovement.bucketDown(),
+                        verticalExtender.moveDown()
+                )
+            );
+
         while (opModeIsActive()) {
             if (gamepad1.a && gamepad1.b) { //just press a and b together to start the search like it would in autonomous
                 double searchOrigin = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
