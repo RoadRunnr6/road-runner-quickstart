@@ -107,8 +107,8 @@ public class mainCodeV1 extends LinearOpMode {
     }
 
     private void setupServos() {
-        bucketServo.setPosition(0.8);
-        clawServo.setPosition(0);
+        //bucketServo.setPosition(0.8);
+        //clawServo.setPosition(0);
     }
 
     private void setupChassis() {
@@ -196,9 +196,9 @@ public class mainCodeV1 extends LinearOpMode {
     private void clawMovement(boolean down, boolean up, double increment) {
         double clawPos = clawServo.getPosition();
         if (down) {
-            clawPos -= increment;
+            clawPos -= 0.025;
         } else if (up) {
-            clawPos += increment;
+            clawPos += 0.025;
         }
         clawPos = clamp(clawPos, 0, 1);  //clamp the values to be between min and max
         clawServo.setPosition(clawPos);
