@@ -20,7 +20,7 @@ public class mainCodeV1 extends LinearOpMode {
     private DcMotor frontRight;
     private DcMotor backLeft;
     private DcMotor frontLeft;
-    private DcMotor arm;
+    private DcMotor horizontalExtender;
 
     private DcMotor intakeMotor;
     private DcMotor verticalExtender;
@@ -29,8 +29,8 @@ public class mainCodeV1 extends LinearOpMode {
     boolean verticalExtensionDirection = true;
     boolean xPressed = false;
     private Servo bucketServo;
-    int ARMMIN;
-    int ARMMAX;
+    int horizontalExtenderMIN;
+    int horizontalExtenderMAX;
     int EXTENDERMIN;
     int EXTENDERMAX;
     int targetedAngle = 1; //for block search
@@ -38,12 +38,7 @@ public class mainCodeV1 extends LinearOpMode {
     int INCREMENT;
     double SERVOINCREMENT = 0.05;
     //all servo positioning stuff is from 0 - 1 (decimals included) and not in radians / degrees for some reason, 0 is 0 degrees, 1 is 320 (or whatever the servo max is) degrees
-    //all our servos have 320 degrees of movement so i limited it so it wont collide with the arm too much
-    private double servoMax = 1; //maximum angle the claw servo is allowed to move
-    private double servoMin = 0; //minimum angle the claw servo is allowed to move
-     
-    private double clawYPos = 0.5; //uses this value to set the initial claw position in the middle of the max and min
-    //i am using a variable because .getPosition() only returns the last position the servo was told to move, not its actual location\
+    //all our servos have 320 degrees of movement so i limited it so it wont collide with the horizontalExtender too much
 
     boolean isAutoPositioning = false;
 
@@ -53,7 +48,7 @@ public class mainCodeV1 extends LinearOpMode {
         frontRight = hardwareMap.get(DcMotor.class, "frontRight");
         backLeft = hardwareMap.get(DcMotor.class, "backLeft");
         frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
-        arm = hardwareMap.get(DcMotor.class, "arm");
+        horizontalExtender = hardwareMap.get(DcMotor.class, "horizontalExtender");
         colorDetector = hardwareMap.get(ColorSensor.class, "colorDetector");
         clawServo = hardwareMap.get(Servo.class, "clawServo"); //add a servo onto the robot just to make sure this works (idk if this will error without one)
         verticalExtender = hardwareMap.get(DcMotor.class, "verticalExtender");
@@ -62,11 +57,11 @@ public class mainCodeV1 extends LinearOpMode {
 
     }
 
-    private void armSetup() {
-        arm.setPower(1);
-        ARMMIN = arm.getCurrentPosition() - 3;
+    private void horizontalExtenderSetup() {
+        horizontalExtender.setPower(1);
+        horizontalExtenderMIN = horizontalExtender.getCurrentPosition() - 3;
         //was 3000
-        ARMMAX = ARMMIN - 3000;
+        horizontalExtenderMAX = horizontalExtenderMIN - 3000;
         INCREMENT = 250;
     }
 
@@ -82,7 +77,7 @@ public class mainCodeV1 extends LinearOpMode {
 
 
     private void setupServos() {
-        bucketServo.setPosition(0.5);
+        //bucketServo.setPosition(0.5);
         clawServo.setPosition(0.5);
     }
 
@@ -99,7 +94,7 @@ public class mainCodeV1 extends LinearOpMode {
         frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         verticalExtender.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        horizontalExtender.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -107,27 +102,24 @@ public class mainCodeV1 extends LinearOpMode {
         frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         verticalExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        horizontalExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-        clawServo.setPosition(clawYPos);
     }
 
     private void initializeAndSetUp() {
         hardwareMapping();
         setupChassis();
-        armSetup();
+        setupServos();
+        horizontalExtenderSetup();
         extenderSetup();
     }
 
     private void postStartSetUp() {
-        arm.setTargetPosition(arm.getCurrentPosition());
-        arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        horizontalExtender.setTargetPosition(horizontalExtender.getCurrentPosition());
+        horizontalExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         verticalExtender.setTargetPosition(verticalExtender.getCurrentPosition());
         verticalExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-
     }
 
     public static double clamp(double value, double min, double max) {
@@ -156,26 +148,21 @@ public class mainCodeV1 extends LinearOpMode {
         frontRightPower = (rotY - (rotX + t)) / denominator;
         backRightPower = (rotY + (rotX - t)) / denominator;
 
-
-
-
-
         frontLeft.setPower(0.75 * frontLeftPower);
         backLeft.setPower(0.75 * backLeftPower);
         frontRight.setPower(0.75 * frontRightPower);
         backRight.setPower(0.75 * backRightPower);
-        clawServo.setPosition(clawYPos); //set servo position
     }
 
-    private void armMovement(boolean down, boolean up, int increment) {
-        int armPosition = arm.getCurrentPosition();
+    private void horizontalExtenderMovement(boolean down, boolean up, int increment) {
+        int horizontalExtenderPosition = horizontalExtender.getCurrentPosition();
         if (down) {       // if (DPAD-down) is being pressed and if not yet the min
-            armPosition += increment;   // Position in
+            horizontalExtenderPosition += increment;   // Position in
         } else if (up) {  // if (DPAD-up) is being pressed and if not yet max
-            armPosition -= increment;   // Position Out
+            horizontalExtenderPosition -= increment;   // Position Out
         }
-        armPosition = Math.max(Math.min(armPosition, ARMMIN), ARMMAX);  //clamp the values to be between min and max
-        arm.setTargetPosition(armPosition);
+        horizontalExtenderPosition = Math.max(Math.min(horizontalExtenderPosition, horizontalExtenderMIN), horizontalExtenderMAX);  //clamp the values to be between min and max
+        horizontalExtender.setTargetPosition(horizontalExtenderPosition);
     }
 
     private void verticalExtension(boolean switchVerticalPosition) {
@@ -197,15 +184,13 @@ public class mainCodeV1 extends LinearOpMode {
 
     private void bucketMovement(boolean down, boolean up, double increment) {
         if (!isAutoPositioning) {
-            int max = 1;
-            int min = 0;
             double bucketPosition = bucketServo.getPosition();
             if (down) {
                 bucketPosition -= increment;
             } else if (up) {
                 bucketPosition += increment;
             }
-            bucketPosition = clamp(bucketPosition, min, max);  //clamp the values to be between min and max
+            bucketPosition = clamp(bucketPosition, 0, 1);  //clamp the values to be between min and max
             bucketServo.setPosition(bucketPosition);
         }
     }
@@ -218,7 +203,7 @@ public class mainCodeV1 extends LinearOpMode {
         } else if (up) {
             clawPos += increment;
         }
-        clawPos = clamp(clawPos, servoMin, servoMax);  //clamp the values to be between min and max
+        clawPos = clamp(clawPos, 0, 1);  //clamp the values to be between min and max
         clawServo.setPosition(clawPos);
     }
 
@@ -239,8 +224,8 @@ public class mainCodeV1 extends LinearOpMode {
         telemetry.addData("Color: ", colorDetection());
         telemetry.addData("difference", distanceBetweenAngles((float) imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES), 90f));
         telemetry.addData("Heading: ", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
-        telemetry.addData("armPosition", arm.getCurrentPosition());
-        telemetry.addData("armMax", ARMMAX);
+        telemetry.addData("horizontalExtenderPosition", horizontalExtender.getCurrentPosition());
+        telemetry.addData("horizontalExtenderMax", horizontalExtenderMAX);
         telemetry.addData("claw angle: ", clawServo.getPosition());
         telemetry.addData("bucket postion:", bucketServo.getPosition());
         telemetry.addData("VerticalExtenderFromPrintFunc:", verticalExtender.getCurrentPosition());
@@ -270,16 +255,16 @@ public class mainCodeV1 extends LinearOpMode {
             directionBetweenAngles = distanceBetweenAngles((float)botHeading, (float)(30*targetedAngle + searchOrigin));
             float VELOCITYTANGENTIAL = 1000; //unsure what the units are for this
             float rotationSpeed;
-            if (arm.getCurrentPosition() > -1000) {
+            if (horizontalExtender.getCurrentPosition() > -1000) {
                 rotationSpeed = 0.9f; //no easing in the beginning
             } else {
-                rotationSpeed = (VELOCITYTANGENTIAL/(-(arm.getCurrentPosition() + 200))); //rotationSpeed (omega) = Vt/r where R is ARMMAX ~ 3000
+                rotationSpeed = (VELOCITYTANGENTIAL/(-(horizontalExtender.getCurrentPosition() + 200))); //rotationSpeed (omega) = Vt/r where R is horizontalExtenderMAX ~ 3000
             }
-            int velocityArm = (int)(10 * ((215 * rotationSpeed)/(60f)));
-            while (arm.getCurrentPosition() > -500) {
-                armMovement(false, true, INCREMENT);
+            int velocityhorizontalExtender = (int)(10 * ((215 * rotationSpeed)/(60f)));
+            while (horizontalExtender.getCurrentPosition() > -500) {
+                horizontalExtenderMovement(false, true, INCREMENT);
             }
-            armMovement(false, true, velocityArm);
+            horizontalExtenderMovement(false, true, velocityhorizontalExtender);
             rotateTo((30*targetedAngle) + searchOrigin, rotationSpeed);
             if (Math.abs(directionBetweenAngles) < 4) { //determines if the robot is facing a direction
                 if (targetedAngle == 1) { //if it was turning one way, switch it
@@ -289,8 +274,8 @@ public class mainCodeV1 extends LinearOpMode {
                 }
             }
         }
-        return (arm.getCurrentPosition() >= ARMMAX + 100);
-        // extend arm if not already extended
+        return (horizontalExtender.getCurrentPosition() >= horizontalExtenderMAX + 100);
+        // extend horizontalExtender if not already extended
         // extend to stage 1. Closest 2. Medium 3. Far
         // rotate x degrees
         // if target color is detected then finish
@@ -343,7 +328,7 @@ public class mainCodeV1 extends LinearOpMode {
                 chassisMovement(gamepad1.left_stick_y, -gamepad1.left_stick_x, -gamepad1.right_stick_x);
             }
 
-            armMovement(gamepad1.dpad_down,gamepad1.dpad_up,INCREMENT);
+            horizontalExtenderMovement(gamepad1.dpad_down,gamepad1.dpad_up,INCREMENT);
             bucketMovement(gamepad1.left_bumper, gamepad1.right_bumper, SERVOINCREMENT);
             clawMovement(gamepad1.dpad_left, gamepad1.dpad_right, SERVOINCREMENT);
             verticalExtension(gamepad1.x); //gamepad1.x is assigned switchVerticalPosition where if that is true, we are switching whether the extender goes up or down, true is up and false is down
