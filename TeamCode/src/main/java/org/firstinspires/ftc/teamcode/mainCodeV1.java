@@ -63,6 +63,7 @@ public class mainCodeV1 extends LinearOpMode {
     }
 
     private void verticalExtenderSetup() {
+<<<<<<< Updated upstream
         EXTENDERMIN = verticalExtender.getCurrentPosition() - 3;
 =======
         verticalExtender.setPower(1);
