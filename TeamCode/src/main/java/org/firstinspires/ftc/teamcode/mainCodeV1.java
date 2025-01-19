@@ -60,6 +60,9 @@ public class mainCodeV1 extends LinearOpMode {
         horizontalExtenderMIN = horizontalExtender.getCurrentPosition() - 3;
         //was 3000
         horizontalExtenderMAX = horizontalExtenderMIN - 2000;
+        horizontalExtender.setTargetPosition(horizontalExtender.getCurrentPosition());
+        horizontalExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        horizontalExtender.setPower(1);
     }
 
     private void verticalExtenderSetup() {
@@ -67,19 +70,22 @@ public class mainCodeV1 extends LinearOpMode {
         verticalExtenderMIN = verticalExtender.getCurrentPosition();
         //was 4000
         verticalExtenderMAX = verticalExtenderMIN - 4200;
+        verticalExtender.setTargetPosition(verticalExtender.getCurrentPosition());
+        verticalExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        verticalExtender.setPower(1);
     }
 
-    private void horizontalExtension(boolean down, boolean up, int increment) {
+    private void horizontalExtension(boolean in, boolean out, int increment) {
         int horizontalExtenderPosition = horizontalExtender.getCurrentPosition();
-        telemetry.addData("downPressed?", down);
-        if (down) { // if (DPAD-down) is being pressed and if not yet the min
+        telemetry.addData("downPressed?", in);
+        if (in) { // if (DPAD-down) is being pressed and if not yet the min
             horizontalExtenderPosition += increment;   // Position in
-            telemetry.addData("Horizontal down", horizontalExtenderPosition);
-            horizontalExtenderPosition = Math.max(Math.min(horizontalExtenderPosition, horizontalExtenderMIN), horizontalExtenderMAX);  //clamp the values to be between min and max
-        } else if (up) {  // if (DPAD-up) is being pressed and if not yet max
+            telemetry.addData("Horizontal inwards", horizontalExtenderPosition);
+            horizontalExtenderPosition = Math.min(Math.max(horizontalExtenderPosition, horizontalExtenderMAX), horizontalExtenderMIN);  //clamp the values to be between min and max
+        } else if (out) {  // if (DPAD-up) is being pressed and if not yet max
             horizontalExtenderPosition -= increment;   // Position Out
-            telemetry.addData("Horizontal up", horizontalExtenderPosition);
-            horizontalExtenderPosition = Math.max(Math.min(horizontalExtenderPosition, horizontalExtenderMIN), horizontalExtenderMAX);  //clamp the values to be between min and max
+            telemetry.addData("Horizontal out", horizontalExtenderPosition);
+            horizontalExtenderPosition = Math.min(Math.max(horizontalExtenderPosition, horizontalExtenderMAX), horizontalExtenderMIN);  //clamp the values to be between min and max
         }
         horizontalExtender.setTargetPosition(horizontalExtenderPosition);
     }
@@ -138,12 +144,6 @@ public class mainCodeV1 extends LinearOpMode {
         verticalExtenderSetup();
     }
 
-    private void postStartSetUp() {
-        verticalExtender.setTargetPosition(verticalExtender.getCurrentPosition());
-        verticalExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        horizontalExtender.setTargetPosition(horizontalExtender.getCurrentPosition());
-        horizontalExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-    }
 
     public static double clamp(double value, double min, double max) {
         return Math.max(min, Math.min(max, value));
@@ -315,7 +315,6 @@ public class mainCodeV1 extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         initializeAndSetUp();
         waitForStart();
-        postStartSetUp();
         while (opModeIsActive()) {
             if (gamepad1.a && gamepad1.b) { //just press a and b together to start the search like it would in autonomous
                 double searchOrigin = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
