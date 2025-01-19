@@ -48,10 +48,10 @@ public class mainCodeV1 extends LinearOpMode {
         frontRight = hardwareMap.get(DcMotor.class, "frontRight");
         backLeft = hardwareMap.get(DcMotor.class, "backLeft");
         frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
-        horizontalExtender = hardwareMap.get(DcMotor.class, "horizontalExtender");
         colorDetector = hardwareMap.get(ColorSensor.class, "colorDetector");
         clawServo = hardwareMap.get(Servo.class, "clawServo"); //add a servo onto the robot just to make sure this works (idk if this will error without one)
         verticalExtender = hardwareMap.get(DcMotor.class, "verticalExtender");
+        horizontalExtender = hardwareMap.get(DcMotor.class, "horizontalExtender");
         bucketServo = hardwareMap.get(Servo.class, "bucketServo");
         intakeMotor = hardwareMap.get(DcMotor.class, "intake/parallel");
     }
@@ -60,7 +60,7 @@ public class mainCodeV1 extends LinearOpMode {
         horizontalExtender.setPower(1);
         horizontalExtenderMIN = horizontalExtender.getCurrentPosition() - 3;
         //was 3000
-        horizontalExtenderMAX = horizontalExtenderMIN - 1800;
+        horizontalExtenderMAX = horizontalExtenderMIN - 2000;
     }
 
     private void verticalExtenderSetup() {
@@ -68,10 +68,10 @@ public class mainCodeV1 extends LinearOpMode {
         EXTENDERMIN = verticalExtender.getCurrentPosition();
         //was 4000
 
-        EXTENDERMAX = EXTENDERMIN - 4000;
+        EXTENDERMAX = EXTENDERMIN - 4200;
     }
 
-    private void horizontalExtenderMovement(boolean down, boolean up, int increment) {
+    private void horizontalExtension(boolean down, boolean up, int increment) {
         int horizontalExtenderPosition = horizontalExtender.getCurrentPosition();
         if (down) {       // if (DPAD-down) is being pressed and if not yet the min
             horizontalExtenderPosition += increment;   // Position in
@@ -258,9 +258,9 @@ public class mainCodeV1 extends LinearOpMode {
             }
             int velocityhorizontalExtender = (int)(10 * ((215 * rotationSpeed)/(60f)));
             while (horizontalExtender.getCurrentPosition() > -500) {
-                horizontalExtenderMovement(false, true, INCREMENT);
+                horizontalExtension(false, true, INCREMENT);
             }
-            horizontalExtenderMovement(false, true, velocityhorizontalExtender);
+            horizontalExtension(false, true, velocityhorizontalExtender);
             rotateTo((30*targetedAngle) + searchOrigin, rotationSpeed);
             if (Math.abs(directionBetweenAngles) < 4) { //determines if the robot is facing a direction
                 if (targetedAngle == 1) { //if it was turning one way, switch it
@@ -324,7 +324,7 @@ public class mainCodeV1 extends LinearOpMode {
                 chassisMovement(gamepad1.left_stick_y, -gamepad1.left_stick_x, -gamepad1.right_stick_x);
             }
 
-            horizontalExtenderMovement(gamepad1.dpad_down,gamepad1.dpad_up,INCREMENT);
+            horizontalExtension(gamepad1.dpad_down,gamepad1.dpad_up,INCREMENT);
             bucketMovement(gamepad1.left_bumper, gamepad1.right_bumper, SERVOINCREMENT);
             clawMovement(gamepad1.dpad_left, gamepad1.dpad_right, SERVOINCREMENT);
             verticalExtension(gamepad1.x); //gamepad1.x is assigned switchVerticalPosition where if that is true, we are switching whether the extender goes up or down, true is up and false is down
