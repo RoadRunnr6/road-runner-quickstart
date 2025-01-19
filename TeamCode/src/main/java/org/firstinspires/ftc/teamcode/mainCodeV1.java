@@ -27,12 +27,13 @@ public class mainCodeV1 extends LinearOpMode {
     private ColorSensor colorDetector;
     private Servo clawServo;
     boolean verticalExtensionDirection = true;
+    boolean verticalExtensionDirection = false;
     boolean xPressed = false;
     private Servo bucketServo;
     int horizontalExtenderMIN;
     int horizontalExtenderMAX;
-    int EXTENDERMIN;
-    int EXTENDERMAX;
+    int verticalExtenderMIN;
+    int verticalExtenderMAX;
     int targetedAngle = 1; //for block search
     double searchOrigin; //for block search
     int INCREMENT = 250;
@@ -64,19 +65,26 @@ public class mainCodeV1 extends LinearOpMode {
 
     private void verticalExtenderSetup() {
         EXTENDERMIN = verticalExtender.getCurrentPosition() - 3;
+=======
+        verticalExtender.setPower(1);
+        verticalExtenderMIN = verticalExtender.getCurrentPosition();
+>>>>>>> Stashed changes
         //was 4000
 
-        EXTENDERMAX = EXTENDERMIN - 4200;
+        verticalExtenderMAX = verticalExtenderMIN - 4200;
     }
 
     private void horizontalExtension(boolean down, boolean up, int increment) {
         int horizontalExtenderPosition = horizontalExtender.getCurrentPosition();
         if (down) {       // if (DPAD-down) is being pressed and if not yet the min
             horizontalExtenderPosition += increment;   // Position in
+            telemetry.addData("Horizontal down", horizontalExtenderPosition);
+            horizontalExtenderPosition = Math.max(Math.min(horizontalExtenderPosition, horizontalExtenderMIN), horizontalExtenderMAX);  //clamp the values to be between min and max
         } else if (up) {  // if (DPAD-up) is being pressed and if not yet max
             horizontalExtenderPosition -= increment;   // Position Out
+            telemetry.addData("Horizontal up", horizontalExtenderPosition);
+            horizontalExtenderPosition = Math.max(Math.min(horizontalExtenderPosition, horizontalExtenderMIN), horizontalExtenderMAX);  //clamp the values to be between min and max
         }
-        horizontalExtenderPosition = Math.max(Math.min(horizontalExtenderPosition, horizontalExtenderMIN), horizontalExtenderMAX);  //clamp the values to be between min and max
         horizontalExtender.setTargetPosition(horizontalExtenderPosition);
     }
 
@@ -86,9 +94,9 @@ public class mainCodeV1 extends LinearOpMode {
                 xPressed = true;
                 verticalExtensionDirection = !verticalExtensionDirection;
                 if (verticalExtensionDirection) { //true = up
-                    verticalExtender.setTargetPosition(EXTENDERMAX);
+                    verticalExtender.setTargetPosition(verticalExtenderMAX);
                 } if (!verticalExtensionDirection) { //false = down
-                    verticalExtender.setTargetPosition(EXTENDERMIN);
+                    verticalExtender.setTargetPosition(verticalExtenderMIN);
                 }
             }
         } else {
@@ -97,8 +105,13 @@ public class mainCodeV1 extends LinearOpMode {
     }
 
     private void setupServos() {
+<<<<<<< Updated upstream
         bucketServo.setPosition(0.8);
         clawServo.setPosition(0);
+=======
+        bucketServo.setPosition(0.7);
+        clawServo.setPosition(0.5);
+>>>>>>> Stashed changes
     }
 
     private void setupChassis() {
