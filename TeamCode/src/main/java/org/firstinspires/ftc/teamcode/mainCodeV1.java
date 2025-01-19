@@ -57,15 +57,13 @@ public class mainCodeV1 extends LinearOpMode {
     }
 
     private void horizontalExtenderSetup() {
-        horizontalExtender.setPower(1);
         horizontalExtenderMIN = horizontalExtender.getCurrentPosition() - 3;
         //was 3000
         horizontalExtenderMAX = horizontalExtenderMIN - 2000;
     }
 
     private void verticalExtenderSetup() {
-        verticalExtender.setPower(1);
-        EXTENDERMIN = verticalExtender.getCurrentPosition();
+        EXTENDERMIN = verticalExtender.getCurrentPosition() - 3;
         //was 4000
 
         EXTENDERMAX = EXTENDERMIN - 4200;
@@ -99,8 +97,8 @@ public class mainCodeV1 extends LinearOpMode {
     }
 
     private void setupServos() {
-        //bucketServo.setPosition(0.5);
-        clawServo.setPosition(0.5);
+        bucketServo.setPosition(0.8);
+        clawServo.setPosition(0);
     }
 
     private void setupChassis() {
@@ -137,11 +135,10 @@ public class mainCodeV1 extends LinearOpMode {
     }
 
     private void postStartSetUp() {
-        horizontalExtender.setTargetPosition(horizontalExtender.getCurrentPosition());
-        horizontalExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
         verticalExtender.setTargetPosition(verticalExtender.getCurrentPosition());
         verticalExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        horizontalExtender.setTargetPosition(horizontalExtender.getCurrentPosition());
+        horizontalExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
     public static double clamp(double value, double min, double max) {
