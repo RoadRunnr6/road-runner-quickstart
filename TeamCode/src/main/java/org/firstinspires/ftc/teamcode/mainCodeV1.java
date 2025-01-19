@@ -26,7 +26,6 @@ public class mainCodeV1 extends LinearOpMode {
     private DcMotor verticalExtender;
     private ColorSensor colorDetector;
     private Servo clawServo;
-    boolean verticalExtensionDirection = true;
     boolean verticalExtensionDirection = false;
     boolean xPressed = false;
     private Servo bucketServo;
