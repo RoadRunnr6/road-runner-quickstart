@@ -63,20 +63,16 @@ public class mainCodeV1 extends LinearOpMode {
     }
 
     private void verticalExtenderSetup() {
-<<<<<<< Updated upstream
-        EXTENDERMIN = verticalExtender.getCurrentPosition() - 3;
-=======
         verticalExtender.setPower(1);
         verticalExtenderMIN = verticalExtender.getCurrentPosition();
->>>>>>> Stashed changes
         //was 4000
-
         verticalExtenderMAX = verticalExtenderMIN - 4200;
     }
 
     private void horizontalExtension(boolean down, boolean up, int increment) {
         int horizontalExtenderPosition = horizontalExtender.getCurrentPosition();
-        if (down) {       // if (DPAD-down) is being pressed and if not yet the min
+        telemetry.addData("downPressed?", down);
+        if (down) { // if (DPAD-down) is being pressed and if not yet the min
             horizontalExtenderPosition += increment;   // Position in
             telemetry.addData("Horizontal down", horizontalExtenderPosition);
             horizontalExtenderPosition = Math.max(Math.min(horizontalExtenderPosition, horizontalExtenderMIN), horizontalExtenderMAX);  //clamp the values to be between min and max
@@ -105,13 +101,8 @@ public class mainCodeV1 extends LinearOpMode {
     }
 
     private void setupServos() {
-<<<<<<< Updated upstream
         bucketServo.setPosition(0.8);
         clawServo.setPosition(0);
-=======
-        bucketServo.setPosition(0.7);
-        clawServo.setPosition(0.5);
->>>>>>> Stashed changes
     }
 
     private void setupChassis() {
