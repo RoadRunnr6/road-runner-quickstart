@@ -35,7 +35,7 @@ public class mainCodeV1 extends LinearOpMode {
     int EXTENDERMAX;
     int targetedAngle = 1; //for block search
     double searchOrigin; //for block search
-    int INCREMENT;
+    int INCREMENT = 250;
     double SERVOINCREMENT = 0.05;
     //all servo positioning stuff is from 0 - 1 (decimals included) and not in radians / degrees for some reason, 0 is 0 degrees, 1 is 320 (or whatever the servo max is) degrees
     //all our servos have 320 degrees of movement so i limited it so it wont collide with the horizontalExtender too much
@@ -54,27 +54,49 @@ public class mainCodeV1 extends LinearOpMode {
         verticalExtender = hardwareMap.get(DcMotor.class, "verticalExtender");
         bucketServo = hardwareMap.get(Servo.class, "bucketServo");
         intakeMotor = hardwareMap.get(DcMotor.class, "intake/parallel");
-
     }
 
     private void horizontalExtenderSetup() {
         horizontalExtender.setPower(1);
         horizontalExtenderMIN = horizontalExtender.getCurrentPosition() - 3;
         //was 3000
-        horizontalExtenderMAX = horizontalExtenderMIN - 3000;
-        INCREMENT = 250;
+        horizontalExtenderMAX = horizontalExtenderMIN - 1800;
     }
 
-    private void extenderSetup() {
+    private void verticalExtenderSetup() {
         verticalExtender.setPower(1);
-
         EXTENDERMIN = verticalExtender.getCurrentPosition();
-
         //was 4000
 
-        EXTENDERMAX = EXTENDERMIN - 4400;
+        EXTENDERMAX = EXTENDERMIN - 4000;
     }
 
+    private void horizontalExtenderMovement(boolean down, boolean up, int increment) {
+        int horizontalExtenderPosition = horizontalExtender.getCurrentPosition();
+        if (down) {       // if (DPAD-down) is being pressed and if not yet the min
+            horizontalExtenderPosition += increment;   // Position in
+        } else if (up) {  // if (DPAD-up) is being pressed and if not yet max
+            horizontalExtenderPosition -= increment;   // Position Out
+        }
+        horizontalExtenderPosition = Math.max(Math.min(horizontalExtenderPosition, horizontalExtenderMIN), horizontalExtenderMAX);  //clamp the values to be between min and max
+        horizontalExtender.setTargetPosition(horizontalExtenderPosition);
+    }
+
+    private void verticalExtension(boolean switchVerticalPosition) {
+        if (switchVerticalPosition) {
+            if (!xPressed) {
+                xPressed = true;
+                verticalExtensionDirection = !verticalExtensionDirection;
+                if (verticalExtensionDirection) { //true = up
+                    verticalExtender.setTargetPosition(EXTENDERMAX);
+                } if (!verticalExtensionDirection) { //false = down
+                    verticalExtender.setTargetPosition(EXTENDERMIN);
+                }
+            }
+        } else {
+            xPressed = false;
+        }
+    }
 
     private void setupServos() {
         //bucketServo.setPosition(0.5);
@@ -111,7 +133,7 @@ public class mainCodeV1 extends LinearOpMode {
         setupChassis();
         setupServos();
         horizontalExtenderSetup();
-        extenderSetup();
+        verticalExtenderSetup();
     }
 
     private void postStartSetUp() {
@@ -154,33 +176,7 @@ public class mainCodeV1 extends LinearOpMode {
         backRight.setPower(0.75 * backRightPower);
     }
 
-    private void horizontalExtenderMovement(boolean down, boolean up, int increment) {
-        int horizontalExtenderPosition = horizontalExtender.getCurrentPosition();
-        if (down) {       // if (DPAD-down) is being pressed and if not yet the min
-            horizontalExtenderPosition += increment;   // Position in
-        } else if (up) {  // if (DPAD-up) is being pressed and if not yet max
-            horizontalExtenderPosition -= increment;   // Position Out
-        }
-        horizontalExtenderPosition = Math.max(Math.min(horizontalExtenderPosition, horizontalExtenderMIN), horizontalExtenderMAX);  //clamp the values to be between min and max
-        horizontalExtender.setTargetPosition(horizontalExtenderPosition);
-    }
 
-    private void verticalExtension(boolean switchVerticalPosition) {
-
-        if (switchVerticalPosition) {
-            if (!xPressed) {
-                xPressed = true;
-                verticalExtensionDirection = !verticalExtensionDirection;
-                if (verticalExtensionDirection) { //true = up
-                    verticalExtender.setTargetPosition(EXTENDERMAX);
-                } if (!verticalExtensionDirection) { //false = down
-                    verticalExtender.setTargetPosition(EXTENDERMIN);
-                }
-            }
-        } else {
-            xPressed = false;
-        }
-    }
 
     private void bucketMovement(boolean down, boolean up, double increment) {
         if (!isAutoPositioning) {
