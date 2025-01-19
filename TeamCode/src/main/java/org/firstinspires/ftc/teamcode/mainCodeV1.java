@@ -58,7 +58,7 @@ public class mainCodeV1 extends LinearOpMode {
     }
 
     private void horizontalExtenderSetup() {
-        horizontalExtender.setPower(1);
+       // horizontalExtender.setPower(1);
         horizontalExtenderMIN = horizontalExtender.getCurrentPosition() - 3;
         //was 3000
         horizontalExtenderMAX = horizontalExtenderMIN - 3000;
@@ -66,19 +66,19 @@ public class mainCodeV1 extends LinearOpMode {
     }
 
     private void extenderSetup() {
-        verticalExtender.setPower(1);
+        verticalExtender.setPower(0.7);
 
         EXTENDERMIN = verticalExtender.getCurrentPosition();
 
         //was 4000
 
-        EXTENDERMAX = EXTENDERMIN - 4400;
+        EXTENDERMAX = EXTENDERMIN - 4200;
     }
 
 
     private void setupServos() {
-        //bucketServo.setPosition(0.5);
-        clawServo.setPosition(0.5);
+        bucketServo.setPosition(0);
+        clawServo.setPosition(0);
     }
 
     private void setupChassis() {
@@ -330,6 +330,7 @@ public class mainCodeV1 extends LinearOpMode {
 
             horizontalExtenderMovement(gamepad1.dpad_down,gamepad1.dpad_up,INCREMENT);
             bucketMovement(gamepad1.left_bumper, gamepad1.right_bumper, SERVOINCREMENT);
+
             clawMovement(gamepad1.dpad_left, gamepad1.dpad_right, SERVOINCREMENT);
             verticalExtension(gamepad1.x); //gamepad1.x is assigned switchVerticalPosition where if that is true, we are switching whether the extender goes up or down, true is up and false is down
             intakeMotorControl(gamepad2.left_bumper, gamepad2.right_bumper);
