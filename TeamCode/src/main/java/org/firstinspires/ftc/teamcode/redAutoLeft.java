@@ -55,14 +55,15 @@ public class redAutoLeft extends LinearOpMode {
         backRight.setPower(0.75 * backRightPower);
     }
 
-    private void intakeArmMovement(boolean in, boolean out, int increment, DcMotor horizontalExtender, double armMin, double armMax) {
+    private void intakeArmMovement(boolean in, boolean out, int increment, DcMotor horizontalExtender, int horizontalExtenderMin, int horizontalExtenderMax) {
         int extenderPosition = horizontalExtender.getCurrentPosition();
         if (in) {       // if (DPAD-down) is being pressed and if not yet the min
             extenderPosition += increment;   // Position in
+            extenderPosition = Math.min(Math.max(extenderPosition, horizontalExtenderMax), horizontalExtenderMin);  //clamp the values to be between min and max
         } else if (out) {  // if (DPAD-up) is being pressed and if not yet max
             extenderPosition -= increment;   // Position Out
+            extenderPosition = Math.min(Math.max(extenderPosition, horizontalExtenderMax), horizontalExtenderMin);  //clamp the values to be between min and max
         }
-        extenderPosition = Math.max(Math.min(extenderPosition, (int)armMin), (int)armMax);  //clamp the values to be between min and max
         horizontalExtender.setTargetPosition(extenderPosition);
     }
 
@@ -105,7 +106,6 @@ public class redAutoLeft extends LinearOpMode {
         return phi > 180 ? phi - 360 : (phi < -180 ? phi + 360 : phi);
     }
 
-
     public class BucketMovement {
         private Servo bucketServo;
 
@@ -115,7 +115,7 @@ public class redAutoLeft extends LinearOpMode {
 
         public class BucketUp implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
-                bucketServo.setPosition(1); //alter as necessary
+                bucketServo.setPosition(0.2); //alter as necessary
                 return false;
             }
         }
@@ -126,7 +126,7 @@ public class redAutoLeft extends LinearOpMode {
 
         public class BucketDown implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
-                bucketServo.setPosition(0); //alter as necessary
+                bucketServo.setPosition(0.8); //alter as necessary
                 return false;
             }
         }
@@ -137,27 +137,27 @@ public class redAutoLeft extends LinearOpMode {
     }
 
     public class VerticalExtension {
-        private DcMotorEx verticalExtender;
+        private DcMotor verticalExtender;
         private boolean initialized = false;
-        int EXTENDERMIN;
-        int EXTENDERMAX;
+        int verticalExtenderMin;
+        int verticalExtenderMax;
 
         public VerticalExtension(HardwareMap hardwareMap) {
-            verticalExtender = hardwareMap.get(DcMotorEx.class, "verticalExtender");
+            verticalExtender = hardwareMap.get(DcMotor.class, "verticalExtender");
             verticalExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             verticalExtender.setTargetPosition(verticalExtender.getCurrentPosition());
             verticalExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            verticalExtender.setPower(1);
         }
 
         public class MoveUp implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
                 if (!initialized) {
-                    verticalExtender.setPower(0.8);
-                    EXTENDERMIN = verticalExtender.getCurrentPosition();
-                    EXTENDERMAX = EXTENDERMIN - 4400;
+                    verticalExtenderMin = verticalExtender.getCurrentPosition();
+                    verticalExtenderMax = verticalExtenderMin - 4000;
                     initialized = true;
                 }
-                verticalExtender.setTargetPosition(EXTENDERMAX);
+                verticalExtender.setTargetPosition(verticalExtenderMax);
                 return false;
             }
         }
@@ -169,17 +169,12 @@ public class redAutoLeft extends LinearOpMode {
 
         public class MoveDown implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
-                if (!initialized) {
-                    verticalExtender.setPower(0.8);
-                    initialized = true;
-                }
-                verticalExtender.setTargetPosition(EXTENDERMIN);
+                verticalExtender.setTargetPosition(verticalExtenderMin);
                 return false;
             }
         }
 
         public Action moveDown() {
-            initialized = false;
             return new MoveDown();
         }
     }
@@ -202,6 +197,7 @@ public class redAutoLeft extends LinearOpMode {
             horizontalExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             horizontalExtender.setTargetPosition(horizontalExtender.getCurrentPosition());
             horizontalExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            horizontalExtender.setPower(1);
 
             imu = hardwareMap.get(IMU.class, "imu");
             frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
@@ -241,12 +237,12 @@ public class redAutoLeft extends LinearOpMode {
                 int INCREMENT = 250;
                 float rotationSpeed;
                 double searchOrigin = 0;
-                double armMin = 0;
-                double armMax = 0;
+                int horizontalExtenderMin = 0;
+                int horizontalExtenderMax = 0;
                 int targetedAngle = 1;
                 if (!searchColorInit) {
-                    armMin = horizontalExtender.getCurrentPosition() - 3;
-                    armMax = armMin - 2000;
+                    horizontalExtenderMin = horizontalExtender.getCurrentPosition() - 3;
+                    horizontalExtenderMax = horizontalExtenderMin - 2000;
                     targetedAngle = 1;
                     searchColorInit = true;
                     searchOrigin = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
@@ -261,9 +257,9 @@ public class redAutoLeft extends LinearOpMode {
                     }
                     int velocityArm = (int) (10 * ((215 * rotationSpeed) / (60f)));
                     while (horizontalExtender.getCurrentPosition() > -500) {
-                        intakeArmMovement(false, true, INCREMENT, horizontalExtender, armMax, armMin);
+                        intakeArmMovement(false, true, INCREMENT, horizontalExtender, horizontalExtenderMax, horizontalExtenderMin);
                     }
-                    intakeArmMovement(false, true, velocityArm, horizontalExtender, armMax, armMin);
+                    intakeArmMovement(false, true, velocityArm, horizontalExtender, horizontalExtenderMax, horizontalExtenderMin);
                     rotateTo((30 * targetedAngle) + searchOrigin, rotationSpeed, imu, backLeft, backRight, frontLeft, frontRight);
                     if (Math.abs(directionBetweenAngles) < 4) { //determines if the robot is facing a direction
                         if (targetedAngle == 1) { //if it was turning one way, switch it
