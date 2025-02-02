@@ -107,8 +107,8 @@ public class mainCodeV1 extends LinearOpMode {
     }
 
     private void setupServos() {
-        //bucketServo.setPosition(0.8);
-        //clawServo.setPosition(0);
+        bucketServo.setPosition(0.8);
+        clawServo.setPosition(0.5); //need to change soon
     }
 
     private void setupChassis() {
@@ -177,8 +177,6 @@ public class mainCodeV1 extends LinearOpMode {
         backRight.setPower(0.75 * backRightPower);
     }
 
-
-
     private void bucketMovement(boolean down, boolean up, double increment) {
         if (!isAutoPositioning) {
             double bucketPosition = bucketServo.getPosition();
@@ -204,15 +202,14 @@ public class mainCodeV1 extends LinearOpMode {
         clawServo.setPosition(clawPos);
     }
 
-    private void intakeMotorControl(boolean lTrigger, boolean rTrigger){
-
-        if (lTrigger || rTrigger){
-            if (lTrigger){
+    private void intakeMotorControl(boolean lBumper, boolean rBumper){
+        if (lBumper || rBumper){
+            if (lBumper){
                 intakeMotor.setPower(1);
-            }else if (rTrigger){
+            } else if (rBumper){
                 intakeMotor.setPower(-1);
             }
-        }else{
+        } else{
             intakeMotor.setPower(0);
         }
     }

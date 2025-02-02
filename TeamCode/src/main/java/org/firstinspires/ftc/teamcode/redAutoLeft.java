@@ -26,7 +26,7 @@ import com.acmerobotics.roadrunner.ftc.Actions;
 
 
 
-@Autonomous(name = "redAuto", group = "Autonomous")
+@Autonomous(name = "redAutoLeft", group = "Autonomous")
 public class redAutoLeft extends LinearOpMode {
 
     private void chassisMovement(float y, float x, float t, IMU imu, DcMotor backLeft, DcMotor backRight, DcMotor frontLeft, DcMotor frontRight) {
@@ -291,7 +291,7 @@ public class redAutoLeft extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         waitForStart();
         DcMotor intakeMotor = hardwareMap.get(DcMotorEx.class, "intake/parallel");
-        Pose2d initialPose = new Pose2d(-32, -61, Math.toRadians(90));
+        Pose2d initialPose = new Pose2d(-26, -65, Math.toRadians(90));
         Pose2d afterDrop = new Pose2d(-48, -48, Math.toRadians(90));
         MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);
         Intake intake = new Intake(hardwareMap);
@@ -299,10 +299,13 @@ public class redAutoLeft extends LinearOpMode {
         VerticalExtension verticalExtender = new VerticalExtension(hardwareMap);
 
         TrajectoryActionBuilder spike1FirstHalf = drive.actionBuilder(initialPose)
-                .splineTo(new Vector2d(-38, -15), 3 * (Math.PI / 2))
-                .splineTo(new Vector2d(-38, -24), Math.toRadians(270));
+                .lineToY(-36)
+                .setTangent(0)
+                .splineTo(new Vector2d(-48, -36),  Math.toRadians(270));
+                //.splineTo(new Vector2d(-36, -15), Math.toRadians(270));
 
         TrajectoryActionBuilder spike1SecondHalf = drive.actionBuilder(new Pose2d(-38, -24, Math.toRadians(270)))
+                .splineTo(new Vector2d(-48, -24), Math.toRadians(270))
                 .splineTo(new Vector2d(-48, -48), Math.toRadians(225));
 
         TrajectoryActionBuilder spike2FirstHalf = drive.actionBuilder(afterDrop)
@@ -328,12 +331,16 @@ public class redAutoLeft extends LinearOpMode {
         Action thirdSpikeSecondHalf = spike3SecondHalf.build();
 
         intakeMotor.setPower(0.8);
-        Actions.runBlocking(
+        while (opModeIsActive()) {
+            Actions.runBlocking(
                 new SequentialAction(
-                        firstSpikeFirstHalf,
-                        firstSpikeSecondHalf,
-                        intake.clawServoUp()
+                    firstSpikeFirstHalf
+                    //firstSpikeSecondHalf,
+                    //intake.clawServoUp()
                 ));
+        }
+
+        /*
 
         intakeMotor.setPower(0);
         Actions.runBlocking(
@@ -383,5 +390,7 @@ public class redAutoLeft extends LinearOpMode {
                         intake.clawServoDown(),
                         bucketMovement.bucketUp()
                 ));
+
+         */
     }
 }

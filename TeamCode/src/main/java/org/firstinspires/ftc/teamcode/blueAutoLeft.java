@@ -12,7 +12,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import java.util.concurrent.TimeUnit;
 
 
-@Autonomous(name = "blueAuto", group = "Autonomous")
+@Autonomous(name = "blueAutoLeft", group = "Autonomous")
 public class blueAutoLeft extends LinearOpMode {
     // variable declaration
     private IMU imu;
