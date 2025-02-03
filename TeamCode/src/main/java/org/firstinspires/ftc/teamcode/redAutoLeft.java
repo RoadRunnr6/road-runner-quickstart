@@ -291,22 +291,28 @@ public class redAutoLeft extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         waitForStart();
         DcMotor intakeMotor = hardwareMap.get(DcMotorEx.class, "intake/parallel");
-        Pose2d initialPose = new Pose2d(-26, -65, Math.toRadians(90));
+        Pose2d initialPose = new Pose2d(-35, -68, Math.toRadians(90));
         Pose2d afterDrop = new Pose2d(-48, -48, Math.toRadians(90));
         MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);
         Intake intake = new Intake(hardwareMap);
         BucketMovement bucketMovement = new BucketMovement(hardwareMap);
         VerticalExtension verticalExtender = new VerticalExtension(hardwareMap);
 
+        /*
         TrajectoryActionBuilder spike1FirstHalf = drive.actionBuilder(initialPose)
-                .lineToY(-36)
-                .setTangent(0)
-                .splineTo(new Vector2d(-48, -36),  Math.toRadians(270));
-                //.splineTo(new Vector2d(-36, -15), Math.toRadians(270));
+                .lineToYLinearHeading(-12, (Math.toRadians(270)));               //.splineTo(new Vector2d(-36, -15), Math.toRadians(270));
+*/
+        TrajectoryActionBuilder spike1FirstHalf = drive.actionBuilder(initialPose)
+                .lineToYLinearHeading(-12, Math.toRadians(270))
+                .setTangent(Math.toRadians(180))
+                .lineToX(-50);
 
         TrajectoryActionBuilder spike1SecondHalf = drive.actionBuilder(new Pose2d(-38, -24, Math.toRadians(270)))
-                .splineTo(new Vector2d(-48, -24), Math.toRadians(270))
-                .splineTo(new Vector2d(-48, -48), Math.toRadians(225));
+                .lineToY(-36)
+                .lineToYLinearHeading(-66, Math.toRadians(45))
+                .setTangent(Math.toRadians(180))
+                .lineToX(-63);
+
 
         TrajectoryActionBuilder spike2FirstHalf = drive.actionBuilder(afterDrop)
                 .splineTo(new Vector2d(-60, -15), 3 * (Math.PI / 2))
@@ -334,9 +340,11 @@ public class redAutoLeft extends LinearOpMode {
         while (opModeIsActive()) {
             Actions.runBlocking(
                 new SequentialAction(
-                    firstSpikeFirstHalf
-                    //firstSpikeSecondHalf,
-                    //intake.clawServoUp()
+                    firstSpikeFirstHalf,
+                    firstSpikeSecondHalf,
+                    intake.clawServoUp(),
+                    bucketMovement.bucketUp(),
+                    verticalExtender.moveUp()
                 ));
         }
 

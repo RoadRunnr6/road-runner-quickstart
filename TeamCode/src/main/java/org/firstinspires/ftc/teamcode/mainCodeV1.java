@@ -26,8 +26,6 @@ public class mainCodeV1 extends LinearOpMode {
     private DcMotor verticalExtender;
     private ColorSensor colorDetector;
     private Servo clawServo;
-    boolean verticalExtensionDirection = false;
-    boolean xPressed = false;
     private Servo bucketServo;
     int horizontalExtenderMIN;
     int horizontalExtenderMAX;
@@ -80,30 +78,24 @@ public class mainCodeV1 extends LinearOpMode {
         telemetry.addData("downPressed?", in);
         if (in) { // if (DPAD-down) is being pressed and if not yet the min
             horizontalExtenderPosition += increment;   // Position in
-            telemetry.addData("Horizontal inwards", horizontalExtenderPosition);
             horizontalExtenderPosition = Math.min(Math.max(horizontalExtenderPosition, horizontalExtenderMAX), horizontalExtenderMIN);  //clamp the values to be between min and max
         } else if (out) {  // if (DPAD-up) is being pressed and if not yet max
             horizontalExtenderPosition -= increment;   // Position Out
-            telemetry.addData("Horizontal out", horizontalExtenderPosition);
             horizontalExtenderPosition = Math.min(Math.max(horizontalExtenderPosition, horizontalExtenderMAX), horizontalExtenderMIN);  //clamp the values to be between min and max
         }
         horizontalExtender.setTargetPosition(horizontalExtenderPosition);
     }
 
-    private void verticalExtension(boolean switchVerticalPosition) {
-        if (switchVerticalPosition) {
-            if (!xPressed) {
-                xPressed = true;
-                verticalExtensionDirection = !verticalExtensionDirection;
-                if (verticalExtensionDirection) { //true = up
-                    verticalExtender.setTargetPosition(verticalExtenderMAX);
-                } if (!verticalExtensionDirection) { //false = down
-                    verticalExtender.setTargetPosition(verticalExtenderMIN);
-                }
-            }
-        } else {
-            xPressed = false;
+    private void verticalExtension(boolean in, boolean out, int increment) {
+        int verticalExtenderPosition = verticalExtender.getCurrentPosition();
+        if (in) { // if (DPAD-down) is being pressed and if not yet the min
+            verticalExtenderPosition += increment;   // Position in
+            verticalExtenderPosition = Math.min(Math.max(verticalExtenderPosition, horizontalExtenderMAX), horizontalExtenderMIN);  //clamp the values to be between min and max
+        } else if (out) {  // if (DPAD-up) is being pressed and if not yet max
+            verticalExtenderPosition -= increment;   // Position Out
+            verticalExtenderPosition = Math.min(Math.max(verticalExtenderPosition, horizontalExtenderMAX), horizontalExtenderMIN);  //clamp the values to be between min and max
         }
+        verticalExtender.setTargetPosition(verticalExtenderPosition);
     }
 
     private void setupServos() {
@@ -324,7 +316,7 @@ public class mainCodeV1 extends LinearOpMode {
             horizontalExtension(gamepad1.dpad_down,gamepad1.dpad_up,INCREMENT);
             bucketMovement(gamepad1.left_bumper, gamepad1.right_bumper, SERVOINCREMENT);
             clawMovement(gamepad1.dpad_left, gamepad1.dpad_right, SERVOINCREMENT);
-            verticalExtension(gamepad1.x); //gamepad1.x is assigned switchVerticalPosition where if that is true, we are switching whether the extender goes up or down, true is up and false is down
+            verticalExtension(gamepad1.a, gamepad1.y, INCREMENT); //gamepad1.x is assigned switchVerticalPosition where if that is true, we are switching whether the extender goes up or down, true is up and false is down
             intakeMotorControl(gamepad2.left_bumper, gamepad2.right_bumper);
             printThings();
         }
