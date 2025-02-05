@@ -311,7 +311,7 @@ public class redAutoLeft extends LinearOpMode {
                 .lineToY(-36)
                 .lineToYLinearHeading(-66, Math.toRadians(45))
                 .setTangent(Math.toRadians(180))
-                .lineToX(-63);
+                .lineToX(-66);
 
 
         TrajectoryActionBuilder spike2FirstHalf = drive.actionBuilder(afterDrop)
