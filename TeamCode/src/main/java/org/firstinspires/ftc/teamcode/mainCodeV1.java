@@ -67,7 +67,7 @@ public class mainCodeV1 extends LinearOpMode {
         verticalExtender.setPower(1);
         verticalExtenderMIN = verticalExtender.getCurrentPosition();
         //was 4000
-        verticalExtenderMAX = verticalExtenderMIN - 4200;
+        verticalExtenderMAX = verticalExtenderMIN - 4000;
         verticalExtender.setTargetPosition(verticalExtender.getCurrentPosition());
         verticalExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         verticalExtender.setPower(1);
@@ -90,10 +90,10 @@ public class mainCodeV1 extends LinearOpMode {
         int verticalExtenderPosition = verticalExtender.getCurrentPosition();
         if (in) { // if (DPAD-down) is being pressed and if not yet the min
             verticalExtenderPosition += increment;   // Position in
-            verticalExtenderPosition = Math.min(Math.max(verticalExtenderPosition, horizontalExtenderMAX), horizontalExtenderMIN);  //clamp the values to be between min and max
+            verticalExtenderPosition = Math.min(Math.max(verticalExtenderPosition, verticalExtenderMAX), verticalExtenderMIN);  //clamp the values to be between min and max
         } else if (out) {  // if (DPAD-up) is being pressed and if not yet max
             verticalExtenderPosition -= increment;   // Position Out
-            verticalExtenderPosition = Math.min(Math.max(verticalExtenderPosition, horizontalExtenderMAX), horizontalExtenderMIN);  //clamp the values to be between min and max
+            verticalExtenderPosition = Math.min(Math.max(verticalExtenderPosition, verticalExtenderMAX), verticalExtenderMIN);  //clamp the values to be between min and max
         }
         verticalExtender.setTargetPosition(verticalExtenderPosition);
     }
