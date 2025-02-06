@@ -154,7 +154,7 @@ public class redAutoLeft extends LinearOpMode {
             public boolean run(@NonNull TelemetryPacket packet) {
                 if (!initialized) {
                     verticalExtenderMin = verticalExtender.getCurrentPosition();
-                    verticalExtenderMax = verticalExtenderMin - 4000;
+                    verticalExtenderMax = verticalExtenderMin - 2000;
                     initialized = true;
                 }
                 verticalExtender.setTargetPosition(verticalExtenderMax);
@@ -164,7 +164,7 @@ public class redAutoLeft extends LinearOpMode {
 
         public Action moveUp() {
             initialized = false;
-            return new MoveDown();
+            return new MoveUp();
         }
 
         public class MoveDown implements Action {
@@ -210,7 +210,7 @@ public class redAutoLeft extends LinearOpMode {
 
         public class ClawServoUp implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
-                clawServo.setPosition(1); //alter as necessary
+                clawServo.setPosition(0.2); //alter as necessary
                 return false;
             }
         }
@@ -221,7 +221,7 @@ public class redAutoLeft extends LinearOpMode {
 
         public class ClawServoDown implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
-                clawServo.setPosition(0); //alter as necessary
+                clawServo.setPosition(0.95); //alter as necessary
                 return false;
             }
         }
@@ -297,6 +297,8 @@ public class redAutoLeft extends LinearOpMode {
         Intake intake = new Intake(hardwareMap);
         BucketMovement bucketMovement = new BucketMovement(hardwareMap);
         VerticalExtension verticalExtender = new VerticalExtension(hardwareMap);
+        intake.clawServoDown();
+        bucketMovement.bucketDown();
 
         /*
         TrajectoryActionBuilder spike1FirstHalf = drive.actionBuilder(initialPose)
@@ -344,7 +346,10 @@ public class redAutoLeft extends LinearOpMode {
                     firstSpikeSecondHalf,
                     intake.clawServoUp(),
                     bucketMovement.bucketUp(),
-                    verticalExtender.moveUp()
+                    verticalExtender.moveUp(),
+                    bucketMovement.bucketDown(),
+                    bucketMovement.bucketUp(),
+                    firstSpikeFirstHalf
                 ));
         }
 

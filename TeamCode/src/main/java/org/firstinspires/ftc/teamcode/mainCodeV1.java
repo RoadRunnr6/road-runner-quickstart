@@ -100,7 +100,7 @@ public class mainCodeV1 extends LinearOpMode {
 
     private void setupServos() {
         bucketServo.setPosition(0.8);
-        clawServo.setPosition(0.5); //need to change soon
+        clawServo.setPosition(0.8); //need to change soon
     }
 
     private void setupChassis() {
