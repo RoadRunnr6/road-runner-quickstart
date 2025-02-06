@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.JavaUtil;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import java.util.concurrent.TimeUnit;
+import java.lang.Math;
 
 
 @TeleOp(name = "mainCodeV1")
@@ -74,29 +75,65 @@ public class mainCodeV1 extends LinearOpMode {
     }
 
     private void horizontalExtension(boolean in, boolean out, int increment) {
-        int horizontalExtenderPosition = horizontalExtender.getCurrentPosition();
-        telemetry.addData("downPressed?", in);
-        if (in) { // if (DPAD-down) is being pressed and if not yet the min
-            horizontalExtenderPosition += increment;   // Position in
-            horizontalExtenderPosition = Math.min(Math.max(horizontalExtenderPosition, horizontalExtenderMAX), horizontalExtenderMIN);  //clamp the values to be between min and max
-        } else if (out) {  // if (DPAD-up) is being pressed and if not yet max
-            horizontalExtenderPosition -= increment;   // Position Out
-            horizontalExtenderPosition = Math.min(Math.max(horizontalExtenderPosition, horizontalExtenderMAX), horizontalExtenderMIN);  //clamp the values to be between min and max
+
+        if (!isAutoPositioning) {
+
+            int horizontalExtenderPosition = horizontalExtender.getCurrentPosition();
+            telemetry.addData("downPressed?", in);
+            if (in) { // if (DPAD-down) is being pressed and if not yet the min
+                horizontalExtenderPosition += increment;   // Position in
+                horizontalExtenderPosition = Math.min(Math.max(horizontalExtenderPosition, horizontalExtenderMAX), horizontalExtenderMIN);  //clamp the values to be between min and max
+            } else if (out) {  // if (DPAD-up) is being pressed and if not yet max
+                horizontalExtenderPosition -= increment;   // Position Out
+                horizontalExtenderPosition = Math.min(Math.max(horizontalExtenderPosition, horizontalExtenderMAX), horizontalExtenderMIN);  //clamp the values to be between min and max
+            }
+            horizontalExtender.setTargetPosition(horizontalExtenderPosition);
         }
-        horizontalExtender.setTargetPosition(horizontalExtenderPosition);
     }
 
     private void verticalExtension(boolean in, boolean out, int increment) {
-        int verticalExtenderPosition = verticalExtender.getCurrentPosition();
-        if (in) { // if (DPAD-down) is being pressed and if not yet the min
-            verticalExtenderPosition += increment;   // Position in
-            verticalExtenderPosition = Math.min(Math.max(verticalExtenderPosition, verticalExtenderMAX), verticalExtenderMIN);  //clamp the values to be between min and max
-        } else if (out) {  // if (DPAD-up) is being pressed and if not yet max
-            verticalExtenderPosition -= increment;   // Position Out
-            verticalExtenderPosition = Math.min(Math.max(verticalExtenderPosition, verticalExtenderMAX), verticalExtenderMIN);  //clamp the values to be between min and max
+
+        if(!isAutoPositioning) {
+            int verticalExtenderPosition = verticalExtender.getCurrentPosition();
+            if (in) { // if (DPAD-down) is being pressed and if not yet the min
+                verticalExtenderPosition += increment;   // Position in
+                verticalExtenderPosition = Math.min(Math.max(verticalExtenderPosition, verticalExtenderMAX), verticalExtenderMIN);  //clamp the values to be between min and max
+            } else if (out) {  // if (DPAD-up) is being pressed and if not yet max
+                verticalExtenderPosition -= increment;   // Position Out
+                verticalExtenderPosition = Math.min(Math.max(verticalExtenderPosition, verticalExtenderMAX), verticalExtenderMIN);  //clamp the values to be between min and max
+            }
+            verticalExtender.setTargetPosition(verticalExtenderPosition);
         }
-        verticalExtender.setTargetPosition(verticalExtenderPosition);
     }
+
+    private void dropAutoPosition(boolean activate, double bucketAngle, double clawAngle){
+        if (activate) {
+
+
+            isAutoPositioning = true;
+
+            horizontalExtender.setTargetPosition(horizontalExtenderMIN);
+            verticalExtender.setTargetPosition(verticalExtenderMIN);
+
+
+        }
+
+        if (isAutoPositioning){
+
+            if ( (Math.abs(horizontalExtender.getCurrentPosition() - horizontalExtenderMIN)) < 30 && (Math.abs(verticalExtender.getCurrentPosition() - verticalExtenderMIN)) < 30){
+
+                bucketServo.setPosition(bucketAngle);
+                clawServo.setPosition(clawAngle);
+
+                isAutoPositioning = false;
+
+            }
+
+            
+
+        }
+    }
+
 
     private void setupServos() {
         bucketServo.setPosition(0.8);
@@ -184,17 +221,21 @@ public class mainCodeV1 extends LinearOpMode {
 
 
     private void clawMovement(boolean down, boolean up, double increment) {
-        double clawPos = clawServo.getPosition();
-        if (down) {
-            clawPos -= 0.025;
-        } else if (up) {
-            clawPos += 0.025;
+        if (!isAutoPositioning) {
+            double clawPos = clawServo.getPosition();
+            if (down) {
+                clawPos -= 0.025;
+            } else if (up) {
+                clawPos += 0.025;
+            }
+
+            clawPos = clamp(clawPos, 0, 0.875);  //clamp the values to be between min and max
+            clawServo.setPosition(clawPos);
         }
-        clawPos = clamp(clawPos, 0, 1);  //clamp the values to be between min and max
-        clawServo.setPosition(clawPos);
     }
 
     private void intakeMotorControl(boolean lBumper, boolean rBumper){
+
         if (lBumper || rBumper){
             if (lBumper){
                 intakeMotor.setPower(1);
@@ -204,6 +245,7 @@ public class mainCodeV1 extends LinearOpMode {
         } else{
             intakeMotor.setPower(0);
         }
+
     }
 
     private void printThings() {
