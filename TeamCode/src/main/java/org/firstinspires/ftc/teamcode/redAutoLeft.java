@@ -115,7 +115,7 @@ public class redAutoLeft extends LinearOpMode {
 
         public class BucketUp implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
-                bucketServo.setPosition(0.2); //alter as necessary
+                bucketServo.setPosition(0.375); //alter as necessary
                 return false;
             }
         }
@@ -126,7 +126,7 @@ public class redAutoLeft extends LinearOpMode {
 
         public class BucketDown implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
-                bucketServo.setPosition(0.8); //alter as necessary
+                bucketServo.setPosition(0.9); //alter as necessary
                 return false;
             }
         }
@@ -188,6 +188,7 @@ public class redAutoLeft extends LinearOpMode {
         private DcMotor backLeft;
         private ColorSensor colorDetector;
         private Servo clawServo;
+        private DcMotor intakeMotor;
 
 
         private boolean searchColorInit = false;
@@ -206,11 +207,12 @@ public class redAutoLeft extends LinearOpMode {
             backLeft = hardwareMap.get(DcMotor.class, "backLeft");
             colorDetector = hardwareMap.get(ColorSensor.class, "colorDetector");
             clawServo = hardwareMap.get(Servo.class, "clawServo");
+            intakeMotor = hardwareMap.get(DcMotor.class, "intake/parallel");
         }
 
         public class ClawServoUp implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
-                clawServo.setPosition(0.2); //alter as necessary
+                clawServo.setPosition(0.3); //alter as necessary
                 return false;
             }
         }
@@ -221,7 +223,7 @@ public class redAutoLeft extends LinearOpMode {
 
         public class ClawServoDown implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
-                clawServo.setPosition(0.875); //alter as necessary
+                clawServo.setPosition(0.9); //alter as necessary
                 return false;
             }
         }
@@ -230,6 +232,27 @@ public class redAutoLeft extends LinearOpMode {
             return new ClawServoDown();
         }
 
+        public class IntakeMotorPickup implements Action {
+            public boolean run(@NonNull TelemetryPacket packet) {
+                intakeMotor.setPower(1);
+                return false;
+            }
+        }
+
+        public Action intakeMotorPickUp() {
+            return new IntakeMotorPickup();
+        }
+
+        public class IntakeMotorPutDown implements Action {
+            public boolean run(@NonNull TelemetryPacket packet) {
+                intakeMotor.setPower(-1);
+                return false;
+            }
+        }
+
+        public Action intakeMotorPutDown() {
+            return new IntakeMotorPutDown();
+        }
 
         public class SearchColor implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
@@ -300,67 +323,78 @@ public class redAutoLeft extends LinearOpMode {
         intake.clawServoDown();
         bucketMovement.bucketDown();
 
-
-        /*
-        TrajectoryActionBuilder spike1FirstHalf = drive.actionBuilder(initialPose)
-                .lineToYLinearHeading(-12, (Math.toRadians(270)));               //.splineTo(new Vector2d(-36, -15), Math.toRadians(270));
-*/
-        TrajectoryActionBuilder spike1Movement = drive.actionBuilder(initialPose)
+        TrajectoryActionBuilder spike1MovementFirstThird = drive.actionBuilder(initialPose)
                 .lineToYLinearHeading(-12, Math.toRadians(270))
                 .setTangent(Math.toRadians(180))
-                .lineToX(-45)
+                .lineToX(-45);
+
+        TrajectoryActionBuilder spike1MovementSecondThird = drive.actionBuilder(new Pose2d(-45, -12, Math.toRadians(270)))
                 .setTangent(Math.toRadians(90))
-                .lineToY(-36)
+                .lineToY(-36);
+
+        TrajectoryActionBuilder spike1MovementThirdThird = drive.actionBuilder(new Pose2d(-45, -36, Math.toRadians(270)))
+                .setTangent(Math.toRadians(90))
                 .lineToYLinearHeading(-66, Math.toRadians(45))
                 .setTangent(Math.toRadians(180))
                 .lineToX(-66);
 
-        TrajectoryActionBuilder spike2Movement = drive.actionBuilder(afterDrop)
-                .setTangent(Math.toRadians(45))
+        TrajectoryActionBuilder spike2MovementFirstThird = drive.actionBuilder(afterDrop)
+                .setTangent(Math.toRadians(45)) // this might not work
                 .lineToXLinearHeading(-35, Math.toRadians(180))
                 .setTangent(Math.toRadians(90))
                 .lineToYLinearHeading(-12, Math.toRadians(270))
                 .setTangent(Math.toRadians(180))
-                .lineToX(-56) // alter along with the
+                .lineToX(-56); // alter along with the
+
+        TrajectoryActionBuilder spike2MovementSecondThird = drive.actionBuilder(new Pose2d(-56, -12, Math.toRadians(270)))
                 .setTangent(Math.toRadians(90))
-                .lineToY(-36)
+                .lineToY(-36);
+
+        TrajectoryActionBuilder spike2MovementThirdThird = drive.actionBuilder(new Pose2d(-56, -36, Math.toRadians(270)))
+                .setTangent(Math.toRadians(90))
                 .lineToYLinearHeading(-66, Math.toRadians(45))
                 .setTangent(Math.toRadians(180))
                 .lineToX(-66);
 
 
 
-        TrajectoryActionBuilder spike2FirstHalf = drive.actionBuilder(afterDrop)
-                .splineTo(new Vector2d(-60, -15), 3 * (Math.PI / 2))
-                .splineTo(new Vector2d(-60, -24), Math.toRadians(270));
 
-        TrajectoryActionBuilder spike2SecondHalf = drive.actionBuilder(new Pose2d(-60, -24, Math.toRadians(270)))
-                .splineTo(new Vector2d(-48, -48), Math.toRadians(225));
+        Action firstSpikeFirstThird = spike1MovementFirstThird.build();
+        Action firstSpikeSecondThird = spike1MovementSecondThird.build();
+        Action firstSpikeThirdThird = spike1MovementThirdThird.build();
 
-        TrajectoryActionBuilder spike3FirstHalf = drive.actionBuilder(afterDrop)
-                .splineTo(new Vector2d(-61, -15), Math.toRadians(200))
-                .splineTo(new Vector2d(-61, -24), Math.toRadians(200));
-
-        TrajectoryActionBuilder spike3SecondHalf = drive.actionBuilder(new Pose2d(-61, -24, Math.toRadians(200)))
-                .splineTo(new Vector2d(-48, -48), Math.toRadians(225));
+        Action secondSpikeFirstThird = spike2MovementFirstThird.build();
+        Action secondSpikeSecondThird = spike2MovementSecondThird.build();
+        Action secondSpikeThirdThird = spike2MovementThirdThird.build();
 
 
-        Action firstSpikeMovement = spike1Movement.build();
-        Action secondSpikeMovement = spike2Movement.build();
-        Action secondSpikeSecondHalf = spike2SecondHalf.build();
-        Action thirdSpikeFirstHalf = spike3FirstHalf.build();
-        Action thirdSpikeSecondHalf = spike3SecondHalf.build();
-
-        intakeMotor.setPower(0.8);
         while (opModeIsActive()) {
             Actions.runBlocking(
                 new SequentialAction(
-                    firstSpikeMovement,
+                    firstSpikeFirstThird,
+                    intake.intakeMotorPickUp(),
+                    firstSpikeSecondThird,
                     intake.clawServoUp(),
-                    bucketMovement.bucketUp(),
+                    intake.intakeMotorPutDown(),
+                    intake.clawServoDown(),
+                    firstSpikeThirdThird,
                     verticalExtender.moveUp(),
+                    bucketMovement.bucketUp(),
                     bucketMovement.bucketDown(),
-                    bucketMovement.bucketUp()
+                    verticalExtender.moveDown(),
+                        //second spike movement
+                    secondSpikeFirstThird,
+                    intake.intakeMotorPickUp(),
+                    secondSpikeSecondThird,
+                    intake.clawServoUp(),
+                    intake.intakeMotorPutDown(),
+                    intake.clawServoDown(),
+                    secondSpikeThirdThird,
+                    verticalExtender.moveUp(),
+                    bucketMovement.bucketUp(),
+                    bucketMovement.bucketDown(),
+                    verticalExtender.moveDown()
+                    //third spike movement
                 ));
         }
 
