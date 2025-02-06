@@ -221,7 +221,7 @@ public class redAutoLeft extends LinearOpMode {
 
         public class ClawServoDown implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
-                clawServo.setPosition(0.95); //alter as necessary
+                clawServo.setPosition(0.875); //alter as necessary
                 return false;
             }
         }
@@ -292,7 +292,7 @@ public class redAutoLeft extends LinearOpMode {
         waitForStart();
         DcMotor intakeMotor = hardwareMap.get(DcMotorEx.class, "intake/parallel");
         Pose2d initialPose = new Pose2d(-35, -68, Math.toRadians(90));
-        Pose2d afterDrop = new Pose2d(-48, -48, Math.toRadians(90));
+        Pose2d afterDrop = new Pose2d(-66, -66, Math.toRadians(45));
         MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);
         Intake intake = new Intake(hardwareMap);
         BucketMovement bucketMovement = new BucketMovement(hardwareMap);
@@ -300,20 +300,34 @@ public class redAutoLeft extends LinearOpMode {
         intake.clawServoDown();
         bucketMovement.bucketDown();
 
+
         /*
         TrajectoryActionBuilder spike1FirstHalf = drive.actionBuilder(initialPose)
                 .lineToYLinearHeading(-12, (Math.toRadians(270)));               //.splineTo(new Vector2d(-36, -15), Math.toRadians(270));
 */
-        TrajectoryActionBuilder spike1FirstHalf = drive.actionBuilder(initialPose)
+        TrajectoryActionBuilder spike1Movement = drive.actionBuilder(initialPose)
                 .lineToYLinearHeading(-12, Math.toRadians(270))
                 .setTangent(Math.toRadians(180))
-                .lineToX(-50);
-
-        TrajectoryActionBuilder spike1SecondHalf = drive.actionBuilder(new Pose2d(-38, -24, Math.toRadians(270)))
+                .lineToX(-45)
+                .setTangent(Math.toRadians(90))
                 .lineToY(-36)
                 .lineToYLinearHeading(-66, Math.toRadians(45))
                 .setTangent(Math.toRadians(180))
                 .lineToX(-66);
+
+        TrajectoryActionBuilder spike2Movement = drive.actionBuilder(afterDrop)
+                .setTangent(Math.toRadians(45))
+                .lineToXLinearHeading(-35, Math.toRadians(180))
+                .setTangent(Math.toRadians(90))
+                .lineToYLinearHeading(-12, Math.toRadians(270))
+                .setTangent(Math.toRadians(180))
+                .lineToX(-56) // alter along with the
+                .setTangent(Math.toRadians(90))
+                .lineToY(-36)
+                .lineToYLinearHeading(-66, Math.toRadians(45))
+                .setTangent(Math.toRadians(180))
+                .lineToX(-66);
+
 
 
         TrajectoryActionBuilder spike2FirstHalf = drive.actionBuilder(afterDrop)
@@ -331,9 +345,8 @@ public class redAutoLeft extends LinearOpMode {
                 .splineTo(new Vector2d(-48, -48), Math.toRadians(225));
 
 
-        Action firstSpikeFirstHalf = spike1FirstHalf.build();
-        Action firstSpikeSecondHalf = spike1SecondHalf.build();
-        Action secondSpikeFirstHalf = spike2FirstHalf.build();
+        Action firstSpikeMovement = spike1Movement.build();
+        Action secondSpikeMovement = spike2Movement.build();
         Action secondSpikeSecondHalf = spike2SecondHalf.build();
         Action thirdSpikeFirstHalf = spike3FirstHalf.build();
         Action thirdSpikeSecondHalf = spike3SecondHalf.build();
@@ -342,14 +355,12 @@ public class redAutoLeft extends LinearOpMode {
         while (opModeIsActive()) {
             Actions.runBlocking(
                 new SequentialAction(
-                    firstSpikeFirstHalf,
-                    firstSpikeSecondHalf,
+                    firstSpikeMovement,
                     intake.clawServoUp(),
                     bucketMovement.bucketUp(),
                     verticalExtender.moveUp(),
                     bucketMovement.bucketDown(),
-                    bucketMovement.bucketUp(),
-                    firstSpikeFirstHalf
+                    bucketMovement.bucketUp()
                 ));
         }
 
