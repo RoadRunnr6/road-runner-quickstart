@@ -238,10 +238,10 @@ public class mainCodeV1 extends LinearOpMode {
 
         if (lTrigger >= 0.1 || rTrigger >= 0.1) {
             if (lTrigger > rTrigger) {
-                intakeMotor.setPower(-lTrigger*10);
+                intakeMotor.setPower(-lTrigger);
 
             } else if (rTrigger > lTrigger) {
-                intakeMotor.setPower(rTrigger*10);
+                intakeMotor.setPower(rTrigger);
 
             }
         }

@@ -177,6 +177,17 @@ public class redAutoLeft extends LinearOpMode {
         public Action moveDown() {
             return new MoveDown();
         }
+
+        public class Sleep implements Action {
+            public boolean run(@NonNull TelemetryPacket packet) {
+                redAutoLeft.this.sleep(300);
+                return false;
+            }
+        }
+
+        public Action sleep() {
+            return new Sleep();
+        }
     }
 
     public class Intake {
@@ -254,6 +265,17 @@ public class redAutoLeft extends LinearOpMode {
             return new IntakeMotorPutDown();
         }
 
+        public class IntakeMotorOff implements Action {
+            public boolean run(@NonNull TelemetryPacket packet) {
+                intakeMotor.setPower(0);
+                return false;
+            }
+        }
+
+        public Action intakeMotorOff() {
+            return new IntakeMotorOff();
+        }
+
         public class SearchColor implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
                 float VELOCITYTANGENTIAL = 1000;
@@ -313,20 +335,22 @@ public class redAutoLeft extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         waitForStart();
-        DcMotor intakeMotor = hardwareMap.get(DcMotorEx.class, "intake/parallel");
         Pose2d initialPose = new Pose2d(-35, -68, Math.toRadians(90));
         Pose2d afterDrop = new Pose2d(-66, -66, Math.toRadians(45));
         MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);
         Intake intake = new Intake(hardwareMap);
         BucketMovement bucketMovement = new BucketMovement(hardwareMap);
         VerticalExtension verticalExtender = new VerticalExtension(hardwareMap);
-        intake.clawServoDown();
-        bucketMovement.bucketDown();
+        intake.clawServo.setPosition(0.88);
+        sleep(750);
+        bucketMovement.bucketServo.setPosition(0.9);
+
 
         TrajectoryActionBuilder spike1MovementFirstThird = drive.actionBuilder(initialPose)
-                .lineToYLinearHeading(-12, Math.toRadians(270))
+                .setTangent(Math.toRadians(90))
+                .lineToYLinearHeading(-6, Math.toRadians(270))
                 .setTangent(Math.toRadians(180))
-                .lineToX(-45);
+                .lineToX(-50);
 
         TrajectoryActionBuilder spike1MovementSecondThird = drive.actionBuilder(new Pose2d(-45, -12, Math.toRadians(270)))
                 .setTangent(Math.toRadians(90))
@@ -372,15 +396,27 @@ public class redAutoLeft extends LinearOpMode {
             Actions.runBlocking(
                 new SequentialAction(
                     firstSpikeFirstThird,
+                    verticalExtender.sleep(),
                     intake.intakeMotorPickUp(),
+                    verticalExtender.sleep(),
                     firstSpikeSecondThird,
+                    verticalExtender.sleep(),
                     intake.clawServoUp(),
+                    verticalExtender.sleep(),
                     intake.intakeMotorPutDown(),
+                    verticalExtender.sleep(),
+                    intake.intakeMotorOff(),
+                    //need sleep?
                     intake.clawServoDown(),
+                    verticalExtender.sleep(),
                     firstSpikeThirdThird,
+                    verticalExtender.sleep(),
                     verticalExtender.moveUp(),
+                    verticalExtender.sleep(),
                     bucketMovement.bucketUp(),
+                    verticalExtender.sleep(),
                     bucketMovement.bucketDown(),
+                    verticalExtender.sleep(),
                     verticalExtender.moveDown(),
                         //second spike movement
                     secondSpikeFirstThird,
