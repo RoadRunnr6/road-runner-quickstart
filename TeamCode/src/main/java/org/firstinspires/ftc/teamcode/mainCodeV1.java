@@ -129,7 +129,7 @@ public class mainCodeV1 extends LinearOpMode {
 
             }
 
-            
+
 
         }
     }
@@ -229,23 +229,22 @@ public class mainCodeV1 extends LinearOpMode {
                 clawPos += 0.025;
             }
 
-            clawPos = clamp(clawPos, 0, 0.875);  //clamp the values to be between min and max
+            clawPos = clamp(clawPos, 0, 0.9);  //clamp the values to be between min and max
             clawServo.setPosition(clawPos);
         }
     }
 
-    private void intakeMotorControl(boolean lBumper, boolean rBumper){
+    private void intakeMotorControl(double lTrigger, double rTrigger){
 
-        if (lBumper || rBumper){
-            if (lBumper){
-                intakeMotor.setPower(1);
-            } else if (rBumper){
-                intakeMotor.setPower(-1);
+        if (lTrigger >= 0.1 || rTrigger >= 0.1) {
+            if (lTrigger > rTrigger) {
+                intakeMotor.setPower(-lTrigger*10);
+
+            } else if (rTrigger > lTrigger) {
+                intakeMotor.setPower(rTrigger*10);
+
             }
-        } else{
-            intakeMotor.setPower(0);
         }
-
     }
 
     private void printThings() {
@@ -257,8 +256,8 @@ public class mainCodeV1 extends LinearOpMode {
         telemetry.addData("claw angle: ", clawServo.getPosition());
         telemetry.addData("bucket postion:", bucketServo.getPosition());
         telemetry.addData("VerticalExtenderFromPrintFunc:", verticalExtender.getCurrentPosition());
-        telemetry.addData("lTrigger", gamepad2.left_bumper);
-        telemetry.addData("rTrigger", gamepad2.right_bumper);
+        telemetry.addData("lTrigger", gamepad1.left_trigger);
+        telemetry.addData("rTrigger", gamepad1.right_trigger);
         telemetry.update();
     }
 
@@ -359,7 +358,8 @@ public class mainCodeV1 extends LinearOpMode {
             bucketMovement(gamepad1.left_bumper, gamepad1.right_bumper, SERVOINCREMENT);
             clawMovement(gamepad1.dpad_left, gamepad1.dpad_right, SERVOINCREMENT);
             verticalExtension(gamepad1.a, gamepad1.y, INCREMENT); //gamepad1.x is assigned switchVerticalPosition where if that is true, we are switching whether the extender goes up or down, true is up and false is down
-            intakeMotorControl(gamepad2.left_bumper, gamepad2.right_bumper);
+            intakeMotorControl(gamepad1.left_trigger, gamepad1.left_trigger);
+            dropAutoPosition(gamepad1.b, 0.95,0.3);
             printThings();
         }
     }
