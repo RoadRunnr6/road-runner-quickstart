@@ -154,7 +154,7 @@ public class redAutoLeft extends LinearOpMode {
             public boolean run(@NonNull TelemetryPacket packet) {
                 if (!initialized) {
                     verticalExtenderMin = verticalExtender.getCurrentPosition();
-                    verticalExtenderMax = verticalExtenderMin - 2000;
+                    verticalExtenderMax = verticalExtenderMin - 4000;
                     initialized = true;
                 }
                 verticalExtender.setTargetPosition(verticalExtenderMax);
@@ -178,15 +178,70 @@ public class redAutoLeft extends LinearOpMode {
             return new MoveDown();
         }
 
-        public class Sleep implements Action {
+        public class Sleep300 implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
                 redAutoLeft.this.sleep(300);
                 return false;
             }
         }
 
-        public Action sleep() {
-            return new Sleep();
+        public Action sleep300() {
+            return new Sleep300();
+        }
+
+        public class Sleep500 implements Action {
+            public boolean run(@NonNull TelemetryPacket packet) {
+                redAutoLeft.this.sleep(500);
+                return false;
+            }
+        }
+
+        public Action sleep500() {
+            return new Sleep500();
+        }
+
+        public class Sleep1000 implements Action {
+            public boolean run(@NonNull TelemetryPacket packet) {
+                redAutoLeft.this.sleep(1000);
+                return false;
+            }
+        }
+
+        public Action sleep1000() {
+            return new Sleep1000();
+        }
+
+        public class Sleep800 implements Action {
+            public boolean run(@NonNull TelemetryPacket packet) {
+                redAutoLeft.this.sleep(800);
+                return false;
+            }
+        }
+
+        public Action sleep800() {
+            return new Sleep800();
+        }
+
+        public class Sleep200 implements Action {
+            public boolean run(@NonNull TelemetryPacket packet) {
+                redAutoLeft.this.sleep(200);
+                return false;
+            }
+        }
+
+        public Action sleep200() {
+            return new Sleep200();
+        }
+
+        public class Sleep3500 implements Action {
+            public boolean run(@NonNull TelemetryPacket packet) {
+                redAutoLeft.this.sleep(2500);
+                return false;
+            }
+        }
+
+        public Action sleep3500() {
+            return new Sleep3500();
         }
     }
 
@@ -245,7 +300,7 @@ public class redAutoLeft extends LinearOpMode {
 
         public class IntakeMotorPickup implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
-                intakeMotor.setPower(1);
+                intakeMotor.setPower(0.75);
                 return false;
             }
         }
@@ -256,7 +311,7 @@ public class redAutoLeft extends LinearOpMode {
 
         public class IntakeMotorPutDown implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
-                intakeMotor.setPower(-1);
+                intakeMotor.setPower(-0.6);
                 return false;
             }
         }
@@ -335,50 +390,45 @@ public class redAutoLeft extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         waitForStart();
-        Pose2d initialPose = new Pose2d(-35, -68, Math.toRadians(90));
-        Pose2d afterDrop = new Pose2d(-66, -66, Math.toRadians(45));
+        Pose2d initialPose = new Pose2d(-29, -68, Math.toRadians(90));
+        Pose2d afterDrop = new Pose2d(-67, -65, Math.toRadians(50));
         MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);
         Intake intake = new Intake(hardwareMap);
         BucketMovement bucketMovement = new BucketMovement(hardwareMap);
         VerticalExtension verticalExtender = new VerticalExtension(hardwareMap);
-        intake.clawServo.setPosition(0.88);
-        sleep(750);
-        bucketMovement.bucketServo.setPosition(0.9);
-
+        bucketMovement.bucketServo.setPosition(.95);
 
         TrajectoryActionBuilder spike1MovementFirstThird = drive.actionBuilder(initialPose)
                 .setTangent(Math.toRadians(90))
-                .lineToYLinearHeading(-6, Math.toRadians(270))
-                .setTangent(Math.toRadians(180))
-                .lineToX(-50);
+                .lineToYLinearHeading(-29.3, Math.toRadians(185));
 
-        TrajectoryActionBuilder spike1MovementSecondThird = drive.actionBuilder(new Pose2d(-45, -12, Math.toRadians(270)))
-                .setTangent(Math.toRadians(90))
-                .lineToY(-36);
-
-        TrajectoryActionBuilder spike1MovementThirdThird = drive.actionBuilder(new Pose2d(-45, -36, Math.toRadians(270)))
-                .setTangent(Math.toRadians(90))
-                .lineToYLinearHeading(-66, Math.toRadians(45))
+        TrajectoryActionBuilder spike1MovementSecondThird = drive.actionBuilder(new Pose2d(-29, -28.9, Math.toRadians(180)))
                 .setTangent(Math.toRadians(180))
-                .lineToX(-66);
+                .lineToX(-34);
+
+
+        TrajectoryActionBuilder spike1MovementThirdThird = drive.actionBuilder(new Pose2d(-34, -28.85, Math.toRadians(180)))
+                .setTangent(Math.toRadians(90))
+                .lineToYLinearHeading(-65, Math.toRadians(45))
+                .setTangent(Math.toRadians(180))
+                .lineToX(-67);
 
         TrajectoryActionBuilder spike2MovementFirstThird = drive.actionBuilder(afterDrop)
-                .setTangent(Math.toRadians(45)) // this might not work
-                .lineToXLinearHeading(-35, Math.toRadians(180))
-                .setTangent(Math.toRadians(90))
-                .lineToYLinearHeading(-12, Math.toRadians(270))
                 .setTangent(Math.toRadians(180))
-                .lineToX(-56); // alter along with the
-
-        TrajectoryActionBuilder spike2MovementSecondThird = drive.actionBuilder(new Pose2d(-56, -12, Math.toRadians(270)))
+                .lineToXLinearHeading(-41, Math.toRadians(90))
                 .setTangent(Math.toRadians(90))
-                .lineToY(-36);
+                .lineToYLinearHeading(-28.3, Math.toRadians(185));
 
-        TrajectoryActionBuilder spike2MovementThirdThird = drive.actionBuilder(new Pose2d(-56, -36, Math.toRadians(270)))
-                .setTangent(Math.toRadians(90))
-                .lineToYLinearHeading(-66, Math.toRadians(45))
+
+        TrajectoryActionBuilder spike2MovementSecondThird = drive.actionBuilder(new Pose2d(-41, -28, Math.toRadians(180)))
                 .setTangent(Math.toRadians(180))
-                .lineToX(-66);
+                .lineToX(-45);
+
+        TrajectoryActionBuilder spike2MovementThirdThird = drive.actionBuilder(new Pose2d(-45, -28, Math.toRadians(180)))
+                .setTangent(Math.toRadians(90))
+                .lineToYLinearHeading(-65, Math.toRadians(45))
+                .setTangent(Math.toRadians(180))
+                .lineToX(-67);
 
 
 
@@ -396,28 +446,68 @@ public class redAutoLeft extends LinearOpMode {
             Actions.runBlocking(
                 new SequentialAction(
                     firstSpikeFirstThird,
-                    verticalExtender.sleep(),
-                    intake.intakeMotorPickUp(),
-                    verticalExtender.sleep(),
-                    firstSpikeSecondThird,
-                    verticalExtender.sleep(),
-                    intake.clawServoUp(),
-                    verticalExtender.sleep(),
-                    intake.intakeMotorPutDown(),
-                    verticalExtender.sleep(),
-                    intake.intakeMotorOff(),
-                    //need sleep?
                     intake.clawServoDown(),
-                    verticalExtender.sleep(),
+                    verticalExtender.sleep800(),
+                    intake.intakeMotorPickUp(),
+
+                    firstSpikeSecondThird,
+                    verticalExtender.sleep300(),
+
+                    intake.clawServoUp(),
+
+                    verticalExtender.sleep1000(),
+                    intake.intakeMotorPutDown(),
+                    verticalExtender.sleep300(),
+                    intake.intakeMotorOff(),
                     firstSpikeThirdThird,
-                    verticalExtender.sleep(),
                     verticalExtender.moveUp(),
-                    verticalExtender.sleep(),
+                    verticalExtender.sleep3500(),
                     bucketMovement.bucketUp(),
-                    verticalExtender.sleep(),
+                    verticalExtender.sleep800(),
                     bucketMovement.bucketDown(),
-                    verticalExtender.sleep(),
+                    verticalExtender.sleep800(),
+                    bucketMovement.bucketDown(),
                     verticalExtender.moveDown(),
+                    verticalExtender.sleep3500(),
+                        //second spike
+
+
+                    secondSpikeFirstThird,
+                    intake.clawServoDown(),
+                    verticalExtender.sleep800(),
+                    intake.intakeMotorPickUp(),
+                    verticalExtender.sleep200(),
+
+                    secondSpikeSecondThird,
+
+                    verticalExtender.sleep300(),
+                    intake.clawServoUp(),
+                    verticalExtender.sleep1000(),
+                    intake.intakeMotorPutDown(),
+                    verticalExtender.sleep300(),
+                    intake.intakeMotorOff(),
+                    secondSpikeThirdThird,
+
+                    verticalExtender.moveUp(),
+                    verticalExtender.sleep3500(),
+                    bucketMovement.bucketUp(),
+                    verticalExtender.sleep800(),
+                    bucketMovement.bucketDown(),
+                    verticalExtender.sleep800(),
+                    bucketMovement.bucketDown(),
+                    verticalExtender.moveDown(),
+                    verticalExtender.sleep3500()
+
+
+
+
+                        /*
+                    bucketMovement.bucketUp(),
+                    verticalExtender.sleep1000(),
+                    bucketMovement.bucketDown(),
+                    verticalExtender.moveDown(),
+                    verticalExtender.sleep3500(),
+
                         //second spike movement
                     secondSpikeFirstThird,
                     intake.intakeMotorPickUp(),
@@ -431,6 +521,8 @@ public class redAutoLeft extends LinearOpMode {
                     bucketMovement.bucketDown(),
                     verticalExtender.moveDown()
                     //third spike movement
+
+                     */
                 ));
         }
 
