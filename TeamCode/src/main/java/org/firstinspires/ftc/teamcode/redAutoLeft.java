@@ -289,7 +289,7 @@ public class redAutoLeft extends LinearOpMode {
 
         public class ClawServoDown implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
-                clawServo.setPosition(0.9); //alter as necessary
+                clawServo.setPosition(0.8); //alter as necessary
                 return false;
             }
         }

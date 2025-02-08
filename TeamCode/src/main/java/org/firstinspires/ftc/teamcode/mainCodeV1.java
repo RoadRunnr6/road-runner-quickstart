@@ -34,12 +34,15 @@ public class mainCodeV1 extends LinearOpMode {
     int verticalExtenderMAX;
     int targetedAngle = 1; //for block search
     double searchOrigin; //for block search
+    boolean transferSW; //for transfer macro
     int INCREMENT = 250;
     double SERVOINCREMENT = 0.05;
     //all servo positioning stuff is from 0 - 1 (decimals included) and not in radians / degrees for some reason, 0 is 0 degrees, 1 is 320 (or whatever the servo max is) degrees
     //all our servos have 320 degrees of movement so i limited it so it wont collide with the horizontalExtender too much
 
     boolean isAutoPositioning = false;
+
+    int transferMacroState = 0;
 
     private void hardwareMapping() {
         imu = hardwareMap.get(IMU.class, "imu");
@@ -68,7 +71,7 @@ public class mainCodeV1 extends LinearOpMode {
         verticalExtender.setPower(1);
         verticalExtenderMIN = verticalExtender.getCurrentPosition();
         //was 4000
-        verticalExtenderMAX = verticalExtenderMIN - 4000;
+        verticalExtenderMAX = verticalExtenderMIN - 4500;
         verticalExtender.setTargetPosition(verticalExtender.getCurrentPosition());
         verticalExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         verticalExtender.setPower(1);
@@ -76,7 +79,7 @@ public class mainCodeV1 extends LinearOpMode {
 
     private void horizontalExtension(boolean in, boolean out, int increment) {
 
-        if (!isAutoPositioning) {
+        if (!isAutoPositioning || transferMacroState == 0) {
 
             int horizontalExtenderPosition = horizontalExtender.getCurrentPosition();
             telemetry.addData("downPressed?", in);
@@ -93,7 +96,7 @@ public class mainCodeV1 extends LinearOpMode {
 
     private void verticalExtension(boolean in, boolean out, int increment) {
 
-        if(!isAutoPositioning) {
+        if(!isAutoPositioning || transferMacroState == 0) {
             int verticalExtenderPosition = verticalExtender.getCurrentPosition();
             if (in) { // if (DPAD-down) is being pressed and if not yet the min
                 verticalExtenderPosition += increment;   // Position in
@@ -106,32 +109,45 @@ public class mainCodeV1 extends LinearOpMode {
         }
     }
 
-    private void dropAutoPosition(boolean activate, double bucketAngle, double clawAngle){
-        if (activate) {
+    private void dropAutoPosition(boolean activate){
+
+        boolean atPosition = ((Math.abs(horizontalExtender.getCurrentPosition() - horizontalExtenderMIN)) < 30 && (Math.abs(verticalExtender.getCurrentPosition() - verticalExtenderMIN)) < 30 );
+
+        if (activate && transferSW) {
+            transferSW = false;
 
 
-            isAutoPositioning = true;
+            transferMacroState += 1;
 
-            horizontalExtender.setTargetPosition(horizontalExtenderMIN);
-            verticalExtender.setTargetPosition(verticalExtenderMIN);
+            if (transferMacroState > 1) {
+                intakeMotor.setPower(0);
+                transferMacroState = 0;
+                bucketServo.setPosition(0.8);
+                clawServo.setPosition(0.8);
+            }
 
 
+
+
+        } else if (!activate){
+            transferSW = true;
         }
 
-        if (isAutoPositioning){
-
-            if ( (Math.abs(horizontalExtender.getCurrentPosition() - horizontalExtenderMIN)) < 30 && (Math.abs(verticalExtender.getCurrentPosition() - verticalExtenderMIN)) < 30){
-
-                bucketServo.setPosition(bucketAngle);
-                clawServo.setPosition(clawAngle);
-
-                isAutoPositioning = false;
-
+        if (transferMacroState == 1){
+            horizontalExtender.setTargetPosition(horizontalExtenderMIN);
+            verticalExtender.setTargetPosition(verticalExtenderMIN);
+            bucketServo.setPosition(0.95);
+            telemetry.addData("atPos:", atPosition);
+            if (atPosition){
+                clawServo.setPosition(0.3);
+            }else{
+                clawServo.setPosition(0.8);
             }
 
 
 
         }
+
     }
 
 
@@ -207,21 +223,21 @@ public class mainCodeV1 extends LinearOpMode {
     }
 
     private void bucketMovement(boolean down, boolean up, double increment) {
-        if (!isAutoPositioning) {
+        if (transferMacroState == 0) {
             double bucketPosition = bucketServo.getPosition();
             if (down) {
                 bucketPosition -= increment;
             } else if (up) {
                 bucketPosition += increment;
             }
-            bucketPosition = clamp(bucketPosition, 0, 1);  //clamp the values to be between min and max
+            bucketPosition = clamp(bucketPosition, 0.55, 0.95);  //clamp the values to be between min and max
             bucketServo.setPosition(bucketPosition);
         }
     }
 
 
     private void clawMovement(boolean down, boolean up, double increment) {
-        if (!isAutoPositioning) {
+        if (transferMacroState == 0) {
             double clawPos = clawServo.getPosition();
             if (down) {
                 clawPos -= 0.025;
@@ -229,13 +245,14 @@ public class mainCodeV1 extends LinearOpMode {
                 clawPos += 0.025;
             }
 
-            clawPos = clamp(clawPos, 0, 0.9);  //clamp the values to be between min and max
+            clawPos = clamp(clawPos, 0.2, 0.9);  //clamp the values to be between min and max
             clawServo.setPosition(clawPos);
         }
     }
 
     private void intakeMotorControl(double lTrigger, double rTrigger){
 
+        /*
         if (lTrigger >= 0.1 || rTrigger >= 0.1) {
             if (lTrigger > rTrigger) {
                 intakeMotor.setPower(-lTrigger);
@@ -244,20 +261,26 @@ public class mainCodeV1 extends LinearOpMode {
                 intakeMotor.setPower(rTrigger);
 
             }
+        } else {
+            intakeMotor.setPower(0);
         }
+        */
+
+         intakeMotor.setPower(rTrigger - lTrigger);
     }
 
     private void printThings() {
-        telemetry.addData("Color: ", colorDetection());
-        telemetry.addData("difference", distanceBetweenAngles((float) imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES), 90f));
+        //telemetry.addData("Color: ", colorDetection());
+        //telemetry.addData("difference", distanceBetweenAngles((float) imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES), 90f));
         telemetry.addData("Heading: ", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
         telemetry.addData("horizontalExtenderPosition", horizontalExtender.getCurrentPosition());
-        telemetry.addData("horizontalExtenderMax", horizontalExtenderMAX);
+        //telemetry.addData("horizontalExtenderMax", horizontalExtenderMAX);
         telemetry.addData("claw angle: ", clawServo.getPosition());
-        telemetry.addData("bucket postion:", bucketServo.getPosition());
+        telemetry.addData("bucket position:", bucketServo.getPosition());
         telemetry.addData("VerticalExtenderFromPrintFunc:", verticalExtender.getCurrentPosition());
-        telemetry.addData("lTrigger", gamepad1.left_trigger);
-        telemetry.addData("rTrigger", gamepad1.right_trigger);
+        //telemetry.addData("lTrigger", gamepad1.left_trigger);
+        //telemetry.addData("rTrigger", gamepad1.right_trigger);
+        telemetry.addData("Macro", transferMacroState);
         telemetry.update();
     }
 
@@ -353,14 +376,22 @@ public class mainCodeV1 extends LinearOpMode {
             } else {
                 chassisMovement(gamepad1.left_stick_y, -gamepad1.left_stick_x, -gamepad1.right_stick_x);
             }
-
+            /*
             horizontalExtension(gamepad1.dpad_down,gamepad1.dpad_up,INCREMENT);
-            bucketMovement(gamepad1.left_bumper, gamepad1.right_bumper, SERVOINCREMENT);
-            clawMovement(gamepad1.dpad_left, gamepad1.dpad_right, SERVOINCREMENT);
+            bucketMovement(gamepad2.a, gamepad2.y, SERVOINCREMENT);
+            clawMovement(gamepad2.dpad_up, gamepad2.dpad_down, SERVOINCREMENT);
             verticalExtension(gamepad1.a, gamepad1.y, INCREMENT); //gamepad1.x is assigned switchVerticalPosition where if that is true, we are switching whether the extender goes up or down, true is up and false is down
-            intakeMotorControl(gamepad1.left_trigger, gamepad1.left_trigger);
-            dropAutoPosition(gamepad1.b, 0.95,0.3);
+            intakeMotorControl(gamepad2.left_trigger, gamepad2.right_trigger);
+            dropAutoPosition(gamepad2.b, 0.95,0.3);
+
+             */
             printThings();
+            horizontalExtension(gamepad1.dpad_down,gamepad1.dpad_up,INCREMENT);
+            bucketMovement(gamepad2.y, gamepad2.a, SERVOINCREMENT);
+            clawMovement(gamepad2.dpad_up, gamepad2.dpad_down, SERVOINCREMENT);
+            verticalExtension(gamepad1.a, gamepad1.y, INCREMENT); //gamepad1.x is assigned switchVerticalPosition where if that is true, we are switching whether the extender goes up or down, true is up and false is down
+            intakeMotorControl(gamepad2.left_trigger, gamepad2.right_trigger);
+            dropAutoPosition(gamepad2.b);
         }
     }
 }
