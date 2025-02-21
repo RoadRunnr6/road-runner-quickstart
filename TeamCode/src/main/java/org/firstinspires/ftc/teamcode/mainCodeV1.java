@@ -230,7 +230,7 @@ public class mainCodeV1 extends LinearOpMode {
             } else if (up) {
                 bucketPosition += increment;
             }
-            bucketPosition = clamp(bucketPosition, 0.55, 0.95);  //clamp the values to be between min and max
+            bucketPosition = clamp(bucketPosition, 0.65, 0.95);  //clamp the values to be between min and max
             bucketServo.setPosition(bucketPosition);
         }
     }

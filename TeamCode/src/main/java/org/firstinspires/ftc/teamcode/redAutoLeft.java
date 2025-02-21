@@ -113,26 +113,35 @@ public class redAutoLeft extends LinearOpMode {
             bucketServo = hardwareMap.get(Servo.class, "bucketServo");
         }
 
-        public class BucketUp implements Action {
+        public class BucketBottom implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
-                bucketServo.setPosition(0.375); //alter as necessary
+                bucketServo.setPosition(0.95); //alter as necessary
                 return false;
             }
         }
 
-        public Action bucketUp() {
-            return new BucketUp();
+        public Action bucketBottom() {
+            return new BucketBottom();
         }
 
-        public class BucketDown implements Action {
+        public class BucketMiddle implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
-                bucketServo.setPosition(0.9); //alter as necessary
+                bucketServo.setPosition(0.8); //alter as necessary
                 return false;
             }
         }
 
-        public Action bucketDown() {
-            return new BucketDown();
+        public Action bucketMiddle() {
+            return new  BucketMiddle();
+        }
+        public class BucketDrop implements Action {
+            public boolean run(@NonNull TelemetryPacket packet) {
+                bucketServo.setPosition(0.55); //alter as necessary
+                return false;
+            }
+        }
+        public Action bucketDrop() {
+            return new BucketDrop();
         }
     }
 
@@ -460,21 +469,22 @@ public class redAutoLeft extends LinearOpMode {
                     verticalExtender.sleep300(),
                     intake.intakeMotorOff(),
                     firstSpikeThirdThird,
+                    bucketMovement.bucketMiddle(),
                     verticalExtender.moveUp(),
                     verticalExtender.sleep3500(),
-                    bucketMovement.bucketUp(),
+                    bucketMovement.bucketDrop(),
                     verticalExtender.sleep800(),
-                    bucketMovement.bucketDown(),
-                    verticalExtender.sleep800(),
-                    bucketMovement.bucketDown(),
+
                     verticalExtender.moveDown(),
-                    verticalExtender.sleep3500(),
+                    bucketMovement.bucketBottom(),
+                    verticalExtender.sleep1000(),
                         //second spike
 
 
                     secondSpikeFirstThird,
                     intake.clawServoDown(),
                     verticalExtender.sleep800(),
+
                     intake.intakeMotorPickUp(),
                     verticalExtender.sleep200(),
 
@@ -488,14 +498,14 @@ public class redAutoLeft extends LinearOpMode {
                     intake.intakeMotorOff(),
                     secondSpikeThirdThird,
 
+                    bucketMovement.bucketMiddle(),
                     verticalExtender.moveUp(),
                     verticalExtender.sleep3500(),
-                    bucketMovement.bucketUp(),
+                    bucketMovement.bucketDrop(),
                     verticalExtender.sleep800(),
-                    bucketMovement.bucketDown(),
-                    verticalExtender.sleep800(),
-                    bucketMovement.bucketDown(),
+                    
                     verticalExtender.moveDown(),
+                    bucketMovement.bucketBottom(),
                     verticalExtender.sleep3500()
 
 
