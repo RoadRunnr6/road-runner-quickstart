@@ -163,7 +163,7 @@ public class redAutoLeft extends LinearOpMode {
             public boolean run(@NonNull TelemetryPacket packet) {
                 if (!initialized) {
                     verticalExtenderMin = verticalExtender.getCurrentPosition();
-                    verticalExtenderMax = verticalExtenderMin - 4000;
+                    verticalExtenderMax = verticalExtenderMin - 4300;
                     initialized = true;
                 }
                 verticalExtender.setTargetPosition(verticalExtenderMax);
@@ -503,7 +503,7 @@ public class redAutoLeft extends LinearOpMode {
                     verticalExtender.sleep3500(),
                     bucketMovement.bucketDrop(),
                     verticalExtender.sleep800(),
-                    
+
                     verticalExtender.moveDown(),
                     bucketMovement.bucketBottom(),
                     verticalExtender.sleep3500()
