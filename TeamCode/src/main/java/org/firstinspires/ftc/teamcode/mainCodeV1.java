@@ -33,14 +33,15 @@ public class mainCodeV1 extends LinearOpMode {
     int verticalExtenderMIN;
     int verticalExtenderMAX;
     int targetedAngle = 1; //for block search
+
     double searchOrigin; //for block search
     boolean transferSW; //for transfer macro
     int INCREMENT = 250;
+    int lastVerticalPos = 0;
     double SERVOINCREMENT = 0.05;
     //all servo positioning stuff is from 0 - 1 (decimals included) and not in radians / degrees for some reason, 0 is 0 degrees, 1 is 320 (or whatever the servo max is) degrees
     //all our servos have 320 degrees of movement so i limited it so it wont collide with the horizontalExtender too much
 
-    boolean isAutoPositioning = false;
 
     int transferMacroState = 0;
 
@@ -75,11 +76,13 @@ public class mainCodeV1 extends LinearOpMode {
         verticalExtender.setTargetPosition(verticalExtender.getCurrentPosition());
         verticalExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         verticalExtender.setPower(1);
+
+        lastVerticalPos = verticalExtenderMIN;
     }
 
     private void horizontalExtension(boolean in, boolean out, int increment) {
 
-        if (!isAutoPositioning || transferMacroState == 0) {
+        if (transferMacroState == 0) {
 
             int horizontalExtenderPosition = horizontalExtender.getCurrentPosition();
             telemetry.addData("downPressed?", in);
@@ -96,16 +99,18 @@ public class mainCodeV1 extends LinearOpMode {
 
     private void verticalExtension(boolean in, boolean out, int increment) {
 
-        if(!isAutoPositioning || transferMacroState == 0) {
+        if (transferMacroState == 0) {
             int verticalExtenderPosition = verticalExtender.getCurrentPosition();
             if (in) { // if (DPAD-down) is being pressed and if not yet the min
                 verticalExtenderPosition += increment;   // Position in
                 verticalExtenderPosition = Math.min(Math.max(verticalExtenderPosition, verticalExtenderMAX), verticalExtenderMIN);  //clamp the values to be between min and max
+                lastVerticalPos = verticalExtenderPosition;
             } else if (out) {  // if (DPAD-up) is being pressed and if not yet max
                 verticalExtenderPosition -= increment;   // Position Out
                 verticalExtenderPosition = Math.min(Math.max(verticalExtenderPosition, verticalExtenderMAX), verticalExtenderMIN);  //clamp the values to be between min and max
+                lastVerticalPos = verticalExtenderPosition;
             }
-            verticalExtender.setTargetPosition(verticalExtenderPosition);
+            verticalExtender.setTargetPosition(lastVerticalPos);
         }
     }
 
@@ -125,8 +130,6 @@ public class mainCodeV1 extends LinearOpMode {
                 bucketServo.setPosition(0.8);
                 clawServo.setPosition(0.8);
             }
-
-
 
 
         } else if (!activate){
@@ -385,6 +388,7 @@ public class mainCodeV1 extends LinearOpMode {
             dropAutoPosition(gamepad2.b, 0.95,0.3);
 
              */
+
             printThings();
             horizontalExtension(gamepad1.dpad_down,gamepad1.dpad_up,INCREMENT);
             bucketMovement(gamepad2.y, gamepad2.a, 0.025);
@@ -392,6 +396,7 @@ public class mainCodeV1 extends LinearOpMode {
             verticalExtension(gamepad1.a, gamepad1.y, INCREMENT); //gamepad1.x is assigned switchVerticalPosition where if that is true, we are switching whether the extender goes up or down, true is up and false is down
             intakeMotorControl(gamepad2.left_trigger, gamepad2.right_trigger);
             dropAutoPosition(gamepad2.b);
+
         }
     }
 }
