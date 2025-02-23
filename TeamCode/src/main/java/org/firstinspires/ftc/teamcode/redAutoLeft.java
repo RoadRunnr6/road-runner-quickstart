@@ -353,6 +353,17 @@ public class redAutoLeft extends LinearOpMode {
             }
         }
 
+        public class HorizontalExtenderReset implements Action {
+            public boolean run(@NonNull TelemetryPacket packet) {
+                horizontalExtender.setTargetPosition(0); //alter as necessary
+                return false;
+            }
+        }
+
+        public Action horizontalExtenderReset() {
+            return new HorizontalExtenderReset();
+        }
+
         public Action intakeMotorOff() {
             return new IntakeMotorOff();
         }
@@ -427,7 +438,7 @@ public class redAutoLeft extends LinearOpMode {
 
         TrajectoryActionBuilder spike1MovementFirstThird = drive.actionBuilder(initialPose)
                 .setTangent(Math.toRadians(90))
-                .lineToYLinearHeading(-29, Math.toRadians(185));
+                .lineToYLinearHeading(-29.3, Math.toRadians(185));
 
         TrajectoryActionBuilder spike1MovementSecondThird = drive.actionBuilder(new Pose2d(-29, -28.9, Math.toRadians(180)))
                 .setTangent(Math.toRadians(180))
