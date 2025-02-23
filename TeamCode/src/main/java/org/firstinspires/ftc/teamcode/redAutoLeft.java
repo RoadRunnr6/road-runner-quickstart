@@ -298,7 +298,7 @@ public class redAutoLeft extends LinearOpMode {
 
         public class ClawServoDown implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
-                clawServo.setPosition(0.8); //alter as necessary
+                clawServo.setPosition(0.9); //alter as necessary
                 return false;
             }
         }
@@ -306,6 +306,22 @@ public class redAutoLeft extends LinearOpMode {
         public Action clawServoDown() {
             return new ClawServoDown();
         }
+
+        public class ClawServoMiddle implements Action {
+            public boolean run(@NonNull TelemetryPacket packet) {
+                clawServo.setPosition(0.4); //alter as necessary
+                return false;
+            }
+        }
+
+        public Action clawServoMiddle() {
+            return new ClawServoMiddle();
+        }
+
+
+
+
+
 
         public class HorizontalSetUp implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
@@ -427,7 +443,6 @@ public class redAutoLeft extends LinearOpMode {
                 .setTangent(Math.toRadians(180))
                 .lineToX(-34);
 
-
         TrajectoryActionBuilder spike1MovementThirdThird = drive.actionBuilder(new Pose2d(-34, -28.85, Math.toRadians(180)))
                 .setTangent(Math.toRadians(90))
                 .lineToYLinearHeading(-65, Math.toRadians(45))
@@ -440,7 +455,6 @@ public class redAutoLeft extends LinearOpMode {
                 .setTangent(Math.toRadians(90))
                 .lineToYLinearHeading(-28.3, Math.toRadians(185));
 
-
         TrajectoryActionBuilder spike2MovementSecondThird = drive.actionBuilder(new Pose2d(-41, -28, Math.toRadians(180)))
                 .setTangent(Math.toRadians(180))
                 .lineToX(-45);
@@ -451,9 +465,6 @@ public class redAutoLeft extends LinearOpMode {
                 .setTangent(Math.toRadians(180))
                 .lineToX(-67);
 
-
-
-
         Action firstSpikeFirstThird = spike1MovementFirstThird.build();
         Action firstSpikeSecondThird = spike1MovementSecondThird.build();
         Action firstSpikeThirdThird = spike1MovementThirdThird.build();
@@ -462,60 +473,52 @@ public class redAutoLeft extends LinearOpMode {
         Action secondSpikeSecondThird = spike2MovementSecondThird.build();
         Action secondSpikeThirdThird = spike2MovementThirdThird.build();
 
-
         while (opModeIsActive()) {
             Actions.runBlocking(
                 new SequentialAction(
+
+
                     firstSpikeFirstThird,
                     intake.clawServoDown(),
                     verticalExtender.sleep800(),
                     intake.intakeMotorPickUp(),
-
                     firstSpikeSecondThird,
                     verticalExtender.sleep300(),
-
                     intake.clawServoUp(),
-
                     verticalExtender.sleep1000(),
                     intake.intakeMotorPutDown(),
                     verticalExtender.sleep300(),
                     intake.intakeMotorOff(),
+                    intake.clawServoMiddle(),
                     firstSpikeThirdThird,
                     bucketMovement.bucketMiddle(),
                     verticalExtender.moveUp(),
                     verticalExtender.sleep3500(),
                     bucketMovement.bucketDrop(),
                     verticalExtender.sleep800(),
-
                     verticalExtender.moveDown(),
                     bucketMovement.bucketBottom(),
                     verticalExtender.sleep1000(),
                         //second spike
-
-
                     secondSpikeFirstThird,
                     intake.clawServoDown(),
                     verticalExtender.sleep800(),
-
                     intake.intakeMotorPickUp(),
                     verticalExtender.sleep200(),
-
                     secondSpikeSecondThird,
-
                     verticalExtender.sleep300(),
                     intake.clawServoUp(),
                     verticalExtender.sleep1000(),
                     intake.intakeMotorPutDown(),
                     verticalExtender.sleep300(),
                     intake.intakeMotorOff(),
+                    intake.clawServoMiddle(),
                     secondSpikeThirdThird,
-
                     bucketMovement.bucketMiddle(),
                     verticalExtender.moveUp(),
                     verticalExtender.sleep3500(),
                     bucketMovement.bucketDrop(),
                     verticalExtender.sleep800(),
-
                     verticalExtender.moveDown(),
                     bucketMovement.bucketBottom(),
                     verticalExtender.sleep3500()
@@ -523,82 +526,7 @@ public class redAutoLeft extends LinearOpMode {
 
 
 
-                        /*
-                    bucketMovement.bucketUp(),
-                    verticalExtender.sleep1000(),
-                    bucketMovement.bucketDown(),
-                    verticalExtender.moveDown(),
-                    verticalExtender.sleep3500(),
-
-                        //second spike movement
-                    secondSpikeFirstThird,
-                    intake.intakeMotorPickUp(),
-                    secondSpikeSecondThird,
-                    intake.clawServoUp(),
-                    intake.intakeMotorPutDown(),
-                    intake.clawServoDown(),
-                    secondSpikeThirdThird,
-                    verticalExtender.moveUp(),
-                    bucketMovement.bucketUp(),
-                    bucketMovement.bucketDown(),
-                    verticalExtender.moveDown()
-                    //third spike movement
-
-                     */
                 ));
         }
-
-        /*
-
-        intakeMotor.setPower(0);
-        Actions.runBlocking(
-                new SequentialAction(
-                        bucketMovement.bucketUp(),
-                        verticalExtender.moveUp(),
-                        bucketMovement.bucketDown(),
-                        verticalExtender.moveDown(),
-                        intake.clawServoDown(),
-                        bucketMovement.bucketUp()
-                ));
-
-        intakeMotor.setPower(0.8);
-        Actions.runBlocking(
-                new SequentialAction(
-                        secondSpikeFirstHalf,
-                        secondSpikeSecondHalf,
-                        intake.clawServoUp()
-                ));
-
-        intakeMotor.setPower(0);
-        Actions.runBlocking(
-                new SequentialAction(
-                        bucketMovement.bucketUp(),
-                        verticalExtender.moveUp(),
-                        bucketMovement.bucketDown(),
-                        verticalExtender.moveDown(),
-                        intake.clawServoDown(),
-                        bucketMovement.bucketUp()
-                ));
-
-        intakeMotor.setPower(0.8);
-        Actions.runBlocking(
-                new SequentialAction(
-                        thirdSpikeFirstHalf,
-                        thirdSpikeSecondHalf,
-                        intake.clawServoUp()
-                ));
-
-        intakeMotor.setPower(0);
-        Actions.runBlocking(
-                new SequentialAction(
-                        bucketMovement.bucketUp(),
-                        verticalExtender.moveUp(),
-                        bucketMovement.bucketDown(),
-                        verticalExtender.moveDown(),
-                        intake.clawServoDown(),
-                        bucketMovement.bucketUp()
-                ));
-
-         */
     }
 }
