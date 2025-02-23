@@ -60,7 +60,7 @@ public class mainCodeV1 extends LinearOpMode {
     }
 
     private void horizontalExtenderSetup() {
-        horizontalExtenderMIN = horizontalExtender.getCurrentPosition() - 3;
+        horizontalExtenderMIN = horizontalExtender.getCurrentPosition() - 75;
         //was 3000
         horizontalExtenderMAX = horizontalExtenderMIN - 2000;
         horizontalExtender.setTargetPosition(horizontalExtender.getCurrentPosition());

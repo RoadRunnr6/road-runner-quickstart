@@ -307,6 +307,17 @@ public class redAutoLeft extends LinearOpMode {
             return new ClawServoDown();
         }
 
+        public class HorizontalSetUp implements Action {
+            public boolean run(@NonNull TelemetryPacket packet) {
+                horizontalExtender.setTargetPosition(-75); //alter as necessary
+                return false;
+            }
+        }
+
+        public Action horizontalSetUp() {
+            return new HorizontalSetUp();
+        }
+
         public class IntakeMotorPickup implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
                 intakeMotor.setPower(0.75);
@@ -405,6 +416,7 @@ public class redAutoLeft extends LinearOpMode {
         Intake intake = new Intake(hardwareMap);
         BucketMovement bucketMovement = new BucketMovement(hardwareMap);
         VerticalExtension verticalExtender = new VerticalExtension(hardwareMap);
+        intake.horizontalExtender.setTargetPosition(-75);
         bucketMovement.bucketServo.setPosition(.95);
 
         TrajectoryActionBuilder spike1MovementFirstThird = drive.actionBuilder(initialPose)
