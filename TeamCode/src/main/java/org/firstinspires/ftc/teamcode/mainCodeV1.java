@@ -70,9 +70,11 @@ public class mainCodeV1 extends LinearOpMode {
 
     private void verticalExtenderSetup() {
         verticalExtender.setPower(1);
+        verticalExtender.setTargetPosition(0);
         verticalExtenderMIN = verticalExtender.getCurrentPosition();
-        //was 4000
+
         verticalExtenderMAX = verticalExtenderMIN - 4300;
+        //was 4000
         verticalExtender.setTargetPosition(verticalExtender.getCurrentPosition());
         verticalExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         verticalExtender.setPower(1);
@@ -233,7 +235,7 @@ public class mainCodeV1 extends LinearOpMode {
             } else if (up) {
                 bucketPosition += increment;
             }
-            bucketPosition = clamp(bucketPosition, 0.65, 0.95);  //clamp the values to be between min and max
+            bucketPosition = clamp(bucketPosition, 0.55, 0.95);  //clamp the values to be between min and max
             bucketServo.setPosition(bucketPosition);
         }
     }
