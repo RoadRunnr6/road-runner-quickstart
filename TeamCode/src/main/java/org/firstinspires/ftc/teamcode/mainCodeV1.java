@@ -60,10 +60,10 @@ public class mainCodeV1 extends LinearOpMode {
     }
 
     private void horizontalExtenderSetup() {
-        horizontalExtenderMIN = horizontalExtender.getCurrentPosition() - 75;
+        horizontalExtenderMIN = horizontalExtender.getCurrentPosition() - 100;
         //was 3000
         horizontalExtenderMAX = horizontalExtenderMIN - 2000;
-        horizontalExtender.setTargetPosition(horizontalExtender.getCurrentPosition());
+        horizontalExtender.setTargetPosition(horizontalExtenderMIN);
         horizontalExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         horizontalExtender.setPower(1);
     }
@@ -146,7 +146,7 @@ public class mainCodeV1 extends LinearOpMode {
             }else{
                 clawServo.setPosition(0.8);
             }
-
+            lastVerticalPos = verticalExtenderMIN;
 
 
         }
@@ -389,7 +389,7 @@ public class mainCodeV1 extends LinearOpMode {
 
              */
 
-            printThings();
+
             horizontalExtension(gamepad1.dpad_down,gamepad1.dpad_up,INCREMENT);
             bucketMovement(gamepad2.y, gamepad2.a, 0.025);
             clawMovement(gamepad2.dpad_up, gamepad2.dpad_down, SERVOINCREMENT);
@@ -397,6 +397,8 @@ public class mainCodeV1 extends LinearOpMode {
             intakeMotorControl(gamepad2.left_trigger, gamepad2.right_trigger);
             dropAutoPosition(gamepad2.b);
 
+
+            printThings();
         }
     }
 }
