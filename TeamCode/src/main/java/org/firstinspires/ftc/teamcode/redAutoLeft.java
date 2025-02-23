@@ -311,7 +311,7 @@ public class redAutoLeft extends LinearOpMode {
 
         public class ClawServoDown implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
-                clawServo.setPosition(0.9); //alter as necessary
+                clawServo.setPosition(0.925); //alter as necessary
                 return false;
             }
         }
@@ -441,13 +441,13 @@ public class redAutoLeft extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         waitForStart();
         Pose2d initialPose = new Pose2d(-29, -68, Math.toRadians(90));
-        Pose2d afterDrop = new Pose2d(-67, -65, Math.toRadians(50));
+        Pose2d afterDrop = new Pose2d(-58, -60, Math.toRadians(50));
         MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);
         Intake intake = new Intake(hardwareMap);
         BucketMovement bucketMovement = new BucketMovement(hardwareMap);
         VerticalExtension verticalExtender = new VerticalExtension(hardwareMap);
         int horizontalStartingPosition = intake.horizontalExtender.getCurrentPosition();
-        intake.horizontalExtender.setTargetPosition(-75);
+        intake.horizontalExtender.setTargetPosition(-50);
         bucketMovement.bucketServo.setPosition(.95);
 
         TrajectoryActionBuilder spike1MovementFirstThird = drive.actionBuilder(initialPose)
@@ -460,9 +460,9 @@ public class redAutoLeft extends LinearOpMode {
 
         TrajectoryActionBuilder spike1MovementThirdThird = drive.actionBuilder(new Pose2d(-37, -28.85, Math.toRadians(180)))
                 .setTangent(Math.toRadians(90))
-                .lineToYLinearHeading(-65, Math.toRadians(30))
+                .lineToYLinearHeading(-60, Math.toRadians(30))
                 .setTangent(Math.toRadians(180))
-                .lineToX(-63);
+                .lineToX(-58);
 
         TrajectoryActionBuilder spike2MovementFirstThird = drive.actionBuilder(afterDrop)
                 .setTangent(Math.toRadians(180))
