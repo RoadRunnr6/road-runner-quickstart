@@ -451,8 +451,8 @@ public class blueAutoLeft extends LinearOpMode {
         bucketMovement.bucketServo.setPosition(.95);
 
         TrajectoryActionBuilder spike1MovementFirstThird = drive.actionBuilder(initialPose)
-                .setTangent(Math.toRadians(90))
-                .lineToYLinearHeading(30, Math.toRadians(5));
+                .setTangent(Math.toRadians(180))
+                .lineToX(66);
 
         TrajectoryActionBuilder spike1MovementSecondThird = drive.actionBuilder(new Pose2d(-29, -28.9, Math.toRadians(180)))
                 .setTangent(Math.toRadians(180))
@@ -489,6 +489,12 @@ public class blueAutoLeft extends LinearOpMode {
         Action secondSpikeThirdThird = spike2MovementThirdThird.build();
 
         while (opModeIsActive()) {
+            Actions.runBlocking(
+                    new SequentialAction(
+                            firstSpikeFirstThird
+                    )
+            );
+            /*
             Actions.runBlocking(
                     new SequentialAction(
                         firstSpikeFirstThird,
@@ -538,6 +544,8 @@ public class blueAutoLeft extends LinearOpMode {
 
 
                     ));
+
+             */
         }
     }
 }

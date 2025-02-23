@@ -35,7 +35,7 @@ public class redAutoLeft extends LinearOpMode {
         double rotY;
         double denominator;
         double frontLeftPower;
-        double backLeftPower;
+    double backLeftPower;
         double frontRightPower;
         double backRightPower;
 
@@ -311,7 +311,7 @@ public class redAutoLeft extends LinearOpMode {
 
         public class ClawServoDown implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
-                clawServo.setPosition(0.925); //alter as necessary
+                clawServo.setPosition(0.85); //alter as necessary
                 return false;
             }
         }
@@ -332,11 +332,6 @@ public class redAutoLeft extends LinearOpMode {
         }
 
 
-
-
-
-
-
         public class IntakeMotorPickup implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
                 intakeMotor.setPower(-0.85);
@@ -350,7 +345,7 @@ public class redAutoLeft extends LinearOpMode {
 
         public class IntakeMotorPutDown implements Action {
             public boolean run(@NonNull TelemetryPacket packet) {
-                intakeMotor.setPower(1);
+                intakeMotor.setPower(0.85);
                 return false;
             }
         }
@@ -447,7 +442,7 @@ public class redAutoLeft extends LinearOpMode {
         BucketMovement bucketMovement = new BucketMovement(hardwareMap);
         VerticalExtension verticalExtender = new VerticalExtension(hardwareMap);
         int horizontalStartingPosition = intake.horizontalExtender.getCurrentPosition();
-        intake.horizontalExtender.setTargetPosition(-50);
+        intake.horizontalExtender.setTargetPosition(-100);
         bucketMovement.bucketServo.setPosition(.95);
 
         TrajectoryActionBuilder spike1MovementFirstThird = drive.actionBuilder(initialPose)
@@ -478,7 +473,7 @@ public class redAutoLeft extends LinearOpMode {
                 .setTangent(Math.toRadians(90))
                 .lineToYLinearHeading(-65, Math.toRadians(30))
                 .setTangent(Math.toRadians(180))
-                .lineToX(-60);
+                .lineToX(-53);
 
         Action firstSpikeFirstThird = spike1MovementFirstThird.build();
         Action firstSpikeSecondThird = spike1MovementSecondThird.build();
@@ -499,7 +494,7 @@ public class redAutoLeft extends LinearOpMode {
                     intake.intakeMotorPickUp(),
                     firstSpikeSecondThird,
                     intake.clawServoUp(),
-                    verticalExtender.sleep1000(),
+                    verticalExtender.sleep1200(),
                     intake.intakeMotorPutDown(),
                     verticalExtender.sleep1000(),
                     intake.intakeMotorOff(),
@@ -520,7 +515,7 @@ public class redAutoLeft extends LinearOpMode {
                     verticalExtender.sleep200(),
                     secondSpikeSecondThird,
                     intake.clawServoUp(),
-                    verticalExtender.sleep800(),
+                    verticalExtender.sleep1200(),
                     intake.intakeMotorPutDown(),
                     verticalExtender.sleep1000(),
                     intake.intakeMotorOff(),
@@ -533,7 +528,9 @@ public class redAutoLeft extends LinearOpMode {
                     bucketMovement.bucketDrop(),
                     verticalExtender.sleep500(),
                     verticalExtender.moveDown(),
-                    bucketMovement.bucketBottom()
+                    bucketMovement.bucketBottom(),
+                        verticalExtender.sleep3500(),
+                        verticalExtender.sleep3500()
 
 
 

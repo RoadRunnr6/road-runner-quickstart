@@ -62,7 +62,7 @@ public class mainCodeV1 extends LinearOpMode {
     private void horizontalExtenderSetup() {
         horizontalExtenderMIN = horizontalExtender.getCurrentPosition() - 100;
         //was 3000
-        horizontalExtenderMAX = horizontalExtenderMIN - 2000;
+        horizontalExtenderMAX = horizontalExtenderMIN - 1700;
         horizontalExtender.setTargetPosition(horizontalExtenderMIN);
         horizontalExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         horizontalExtender.setPower(1);
