@@ -440,7 +440,7 @@ public class blueAutoLeft extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         waitForStart();
-        Pose2d initialPose = new Pose2d(29, 68, Math.toRadians(270));
+        Pose2d initialPose = new Pose2d(66, 68, Math.toRadians(270));
         Pose2d afterDrop = new Pose2d(67, 65, Math.toRadians(230));
         MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);
         Intake intake = new Intake(hardwareMap);
@@ -452,7 +452,7 @@ public class blueAutoLeft extends LinearOpMode {
 
         TrajectoryActionBuilder spike1MovementFirstThird = drive.actionBuilder(initialPose)
                 .setTangent(Math.toRadians(180))
-                .lineToX(66);
+                .lineToX(29);
 
         TrajectoryActionBuilder spike1MovementSecondThird = drive.actionBuilder(new Pose2d(-29, -28.9, Math.toRadians(180)))
                 .setTangent(Math.toRadians(180))
