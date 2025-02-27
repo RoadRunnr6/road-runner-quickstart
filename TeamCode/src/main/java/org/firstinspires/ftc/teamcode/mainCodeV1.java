@@ -402,18 +402,15 @@ public class mainCodeV1 extends LinearOpMode {
             clawMovement(gamepad2.dpad_up, gamepad2.dpad_down, SERVOINCREMENT);
             verticalExtension(gamepad1.a, gamepad1.y, INCREMENT); //gamepad1.x is assigned switchVerticalPosition where if that is true, we are switching whether the extender goes up or down, true is up and false is down
             intakeMotorControl(gamepad2.left_trigger, gamepad2.right_trigger);
-<<<<<<< HEAD
             dropMacro(gamepad2.b);
 
-=======
-            dropAutoPosition(gamepad2.b);
+
             if (verticalExtender.getCurrentPosition() < -3000) {
                 armProportionality = (1/Math.log10(1300))*(Math.log10(4311+(verticalExtender.getCurrentPosition())));
             }
             else {
                 armProportionality = 1;
             }
->>>>>>> ebfc1066f64de9ce0b3580e0dd7b154e0b052776
 
             printThings();
         }

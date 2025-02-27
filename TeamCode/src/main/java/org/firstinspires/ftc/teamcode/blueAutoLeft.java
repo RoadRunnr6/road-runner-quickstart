@@ -450,6 +450,11 @@ public class blueAutoLeft extends LinearOpMode {
         intake.horizontalExtender.setTargetPosition(-75);
         bucketMovement.bucketServo.setPosition(.95);
 
+
+        TrajectoryActionBuilder splineTest = drive.actionBuilder(new Pose2d(0,0, Math.toRadians(0)))
+                .setTangent(0)
+                .splineTo(new Vector2d(48, 48), Math.PI / 2);
+
         TrajectoryActionBuilder spike1MovementFirstThird = drive.actionBuilder(initialPose)
                 .setTangent(Math.toRadians(180))
                 .lineToX(29);
@@ -480,6 +485,7 @@ public class blueAutoLeft extends LinearOpMode {
                 .setTangent(Math.toRadians(180))
                 .lineToX(60);
 
+        Action splineTestAction = splineTest.build();
         Action firstSpikeFirstThird = spike1MovementFirstThird.build();
         Action firstSpikeSecondThird = spike1MovementSecondThird.build();
         Action firstSpikeThirdThird = spike1MovementThirdThird.build();
@@ -491,7 +497,7 @@ public class blueAutoLeft extends LinearOpMode {
         while (opModeIsActive()) {
             Actions.runBlocking(
                     new SequentialAction(
-                            firstSpikeFirstThird
+                            splineTestAction
                     )
             );
             /*
