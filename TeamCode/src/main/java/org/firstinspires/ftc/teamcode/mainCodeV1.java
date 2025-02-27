@@ -39,6 +39,8 @@ public class mainCodeV1 extends LinearOpMode {
     int INCREMENT = 250;
     int lastVerticalPos = 0;
     double SERVOINCREMENT = 0.05;
+    
+    boolean isInMacro = false;
     //all servo positioning stuff is from 0 - 1 (decimals included) and not in radians / degrees for some reason, 0 is 0 degrees, 1 is 320 (or whatever the servo max is) degrees
     //all our servos have 320 degrees of movement so i limited it so it wont collide with the horizontalExtender too much
 
@@ -84,7 +86,7 @@ public class mainCodeV1 extends LinearOpMode {
 
     private void horizontalExtension(boolean in, boolean out, int increment) {
 
-        if (transferMacroState == 0) {
+        if (!isInMacro) {
 
             int horizontalExtenderPosition = horizontalExtender.getCurrentPosition();
             telemetry.addData("downPressed?", in);
@@ -101,7 +103,7 @@ public class mainCodeV1 extends LinearOpMode {
 
     private void verticalExtension(boolean in, boolean out, int increment) {
 
-        if (transferMacroState == 0) {
+        if (!isInMacro) {
             int verticalExtenderPosition = verticalExtender.getCurrentPosition();
             if (in) { // if (DPAD-down) is being pressed and if not yet the min
                 verticalExtenderPosition += increment;   // Position in
@@ -116,14 +118,15 @@ public class mainCodeV1 extends LinearOpMode {
         }
     }
 
-    private void dropAutoPosition(boolean activate){
+    private void dropMacro(boolean activate){
 
         boolean atPosition = ((Math.abs(horizontalExtender.getCurrentPosition() - horizontalExtenderMIN)) < 30 && (Math.abs(verticalExtender.getCurrentPosition() - verticalExtenderMIN)) < 30 );
 
         if (activate && transferSW) {
             transferSW = false;
 
-
+            isInMacro = true;
+            
             transferMacroState += 1;
 
             if (transferMacroState > 1) {
@@ -131,8 +134,8 @@ public class mainCodeV1 extends LinearOpMode {
                 transferMacroState = 0;
                 bucketServo.setPosition(0.8);
                 clawServo.setPosition(0.8);
+                isInMacro = false;
             }
-
 
         } else if (!activate){
             transferSW = true;
@@ -145,11 +148,11 @@ public class mainCodeV1 extends LinearOpMode {
             telemetry.addData("atPos:", atPosition);
             if (atPosition){
                 clawServo.setPosition(0.3);
+                isInMacro = false;
             }else{
                 clawServo.setPosition(0.8);
             }
             lastVerticalPos = verticalExtenderMIN;
-
 
         }
 
@@ -228,7 +231,7 @@ public class mainCodeV1 extends LinearOpMode {
     }
 
     private void bucketMovement(boolean down, boolean up, double increment) {
-        if (transferMacroState == 0) {
+        if (!isInMacro) {
             double bucketPosition = bucketServo.getPosition();
             if (down) {
                 bucketPosition -= increment;
@@ -242,7 +245,8 @@ public class mainCodeV1 extends LinearOpMode {
 
 
     private void clawMovement(boolean down, boolean up, double increment) {
-        if (transferMacroState == 0) {
+
+        //if (transferMacroState == 0) {
             double clawPos = clawServo.getPosition();
             if (down) {
                 clawPos -= 0.025;
@@ -252,7 +256,7 @@ public class mainCodeV1 extends LinearOpMode {
 
             clawPos = clamp(clawPos, 0.2, 0.9);  //clamp the values to be between min and max
             clawServo.setPosition(clawPos);
-        }
+        //}
     }
 
     private void intakeMotorControl(double lTrigger, double rTrigger){
@@ -387,7 +391,7 @@ public class mainCodeV1 extends LinearOpMode {
             clawMovement(gamepad2.dpad_up, gamepad2.dpad_down, SERVOINCREMENT);
             verticalExtension(gamepad1.a, gamepad1.y, INCREMENT); //gamepad1.x is assigned switchVerticalPosition where if that is true, we are switching whether the extender goes up or down, true is up and false is down
             intakeMotorControl(gamepad2.left_trigger, gamepad2.right_trigger);
-            dropAutoPosition(gamepad2.b, 0.95,0.3);
+            dropMacro(gamepad2.b, 0.95,0.3);
 
              */
 
@@ -397,7 +401,7 @@ public class mainCodeV1 extends LinearOpMode {
             clawMovement(gamepad2.dpad_up, gamepad2.dpad_down, SERVOINCREMENT);
             verticalExtension(gamepad1.a, gamepad1.y, INCREMENT); //gamepad1.x is assigned switchVerticalPosition where if that is true, we are switching whether the extender goes up or down, true is up and false is down
             intakeMotorControl(gamepad2.left_trigger, gamepad2.right_trigger);
-            dropAutoPosition(gamepad2.b);
+            dropMacro(gamepad2.b);
 
 
             printThings();
