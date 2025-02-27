@@ -32,11 +32,12 @@ public class mainCodeV1 extends LinearOpMode {
     int horizontalExtenderMAX;
     int verticalExtenderMIN;
     int verticalExtenderMAX;
+    double armProportionality = 1;
     int targetedAngle = 1; //for block search
 
     double searchOrigin; //for block search
     boolean transferSW; //for transfer macro
-    int INCREMENT = 250;
+    int INCREMENT = 400;
     int lastVerticalPos = 0;
     double SERVOINCREMENT = 0.05;
     //all servo positioning stuff is from 0 - 1 (decimals included) and not in radians / degrees for some reason, 0 is 0 degrees, 1 is 320 (or whatever the servo max is) degrees
@@ -69,7 +70,7 @@ public class mainCodeV1 extends LinearOpMode {
     }
 
     private void verticalExtenderSetup() {
-        verticalExtender.setPower(1);
+        verticalExtender.setPower(2);
         verticalExtender.setTargetPosition(0);
         verticalExtenderMIN = verticalExtender.getCurrentPosition();
 
@@ -77,7 +78,6 @@ public class mainCodeV1 extends LinearOpMode {
         //was 4000
         verticalExtender.setTargetPosition(verticalExtender.getCurrentPosition());
         verticalExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        verticalExtender.setPower(1);
 
         lastVerticalPos = verticalExtenderMIN;
     }
@@ -221,10 +221,10 @@ public class mainCodeV1 extends LinearOpMode {
         frontRightPower = (rotY - (rotX + t)) / denominator;
         backRightPower = (rotY + (rotX - t)) / denominator;
 
-        frontLeft.setPower(0.75 * frontLeftPower);
-        backLeft.setPower(0.75 * backLeftPower);
-        frontRight.setPower(0.75 * frontRightPower);
-        backRight.setPower(0.75 * backRightPower);
+        frontLeft.setPower(1 * frontLeftPower * armProportionality);
+        backLeft.setPower(1 * backLeftPower * armProportionality);
+        frontRight.setPower(1 * frontRightPower * armProportionality);
+        backRight.setPower(1 * backRightPower * armProportionality);
     }
 
     private void bucketMovement(boolean down, boolean up, double increment) {
@@ -286,6 +286,7 @@ public class mainCodeV1 extends LinearOpMode {
         //telemetry.addData("lTrigger", gamepad1.left_trigger);
         //telemetry.addData("rTrigger", gamepad1.right_trigger);
         telemetry.addData("Macro", transferMacroState);
+
         telemetry.update();
     }
 
@@ -398,7 +399,12 @@ public class mainCodeV1 extends LinearOpMode {
             verticalExtension(gamepad1.a, gamepad1.y, INCREMENT); //gamepad1.x is assigned switchVerticalPosition where if that is true, we are switching whether the extender goes up or down, true is up and false is down
             intakeMotorControl(gamepad2.left_trigger, gamepad2.right_trigger);
             dropAutoPosition(gamepad2.b);
-
+            if (verticalExtender.getCurrentPosition() < -3000) {
+                armProportionality = (1/Math.log10(1300))*(Math.log10(4311+(verticalExtender.getCurrentPosition())));
+            }
+            else {
+                armProportionality = 1;
+            }
 
             printThings();
         }
