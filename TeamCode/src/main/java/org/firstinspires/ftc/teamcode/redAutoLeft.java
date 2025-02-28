@@ -445,6 +445,8 @@ public class redAutoLeft extends LinearOpMode {
         intake.horizontalExtender.setTargetPosition(-100);
         bucketMovement.bucketServo.setPosition(.95);
 
+
+
         TrajectoryActionBuilder spike1MovementFirstThird = drive.actionBuilder(initialPose)
                 .setTangent(Math.toRadians(90))
                 .lineToYLinearHeading(-30, Math.toRadians(185));
