@@ -40,6 +40,8 @@ public class mainCodeV1 extends LinearOpMode {
     int INCREMENT = 400;
     int lastVerticalPos = 0;
     double SERVOINCREMENT = 0.05;
+
+    long timeAtStart = -1;
     
     boolean isInMacro = false;
     //all servo positioning stuff is from 0 - 1 (decimals included) and not in radians / degrees for some reason, 0 is 0 degrees, 1 is 320 (or whatever the servo max is) degrees
@@ -122,7 +124,10 @@ public class mainCodeV1 extends LinearOpMode {
 
         boolean atPosition = ((Math.abs(horizontalExtender.getCurrentPosition() - horizontalExtenderMIN)) < 30 && (Math.abs(verticalExtender.getCurrentPosition() - verticalExtenderMIN)) < 30 );
 
+
+
         if (activate && transferSW) {
+            timeAtStart = System.currentTimeMillis();
             transferSW = false;
 
             isInMacro = true;
@@ -144,13 +149,27 @@ public class mainCodeV1 extends LinearOpMode {
         if (transferMacroState == 1){
             horizontalExtender.setTargetPosition(horizontalExtenderMIN);
             verticalExtender.setTargetPosition(verticalExtenderMIN);
-            bucketServo.setPosition(0.95);
+
             telemetry.addData("atPos:", atPosition);
+
+            clawServo.setPosition(0.3);
+
+
+            telemetry.addData("sysTime:", System.currentTimeMillis());
+            telemetry.addData("startTime:", timeAtStart);
             if (atPosition){
-                clawServo.setPosition(0.3);
-                isInMacro = false;
+
+                //bucket: 0.8494
+
+                if (System.currentTimeMillis() - timeAtStart > 1000){
+                    bucketServo.setPosition(0.838); //0.8739
+                }
+                else {
+                    bucketServo.setPosition(0.65);
+                }
+
             }else{
-                clawServo.setPosition(0.8);
+                bucketServo.setPosition(0.65);
             }
             lastVerticalPos = verticalExtenderMIN;
 
@@ -165,7 +184,7 @@ public class mainCodeV1 extends LinearOpMode {
     }
 
     private void setupChassis() {
-        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.FORWARD)));
+        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.LEFT, RevHubOrientationOnRobot.UsbFacingDirection.UP)));
         imu.resetYaw();
 
         backRight.setDirection(DcMotor.Direction.REVERSE);
@@ -363,6 +382,12 @@ public class mainCodeV1 extends LinearOpMode {
         return color;
     }
 
+    private void clawGroundState(boolean start) {
+        if ((!isInMacro) && (start)) {
+            clawServo.setPosition(0.846);
+        }
+    }
+
     private void rotateTo(double targetDegree, float maxRotationSpeed) {
         double botHeading;
         botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
@@ -403,6 +428,8 @@ public class mainCodeV1 extends LinearOpMode {
             verticalExtension(gamepad1.a, gamepad1.y, INCREMENT); //gamepad1.x is assigned switchVerticalPosition where if that is true, we are switching whether the extender goes up or down, true is up and false is down
             intakeMotorControl(gamepad2.left_trigger, gamepad2.right_trigger);
             dropMacro(gamepad2.b);
+            clawGroundState(gamepad2.x);
+
 
 
             if (verticalExtender.getCurrentPosition() < -3000) {
