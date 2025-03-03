@@ -442,7 +442,8 @@ public class blueAutoLeft extends LinearOpMode {
         waitForStart();
         Pose2d initialPose = new Pose2d(66, 68, Math.toRadians(270));
         Pose2d afterDrop = new Pose2d(67, 65, Math.toRadians(230));
-        MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);
+        Pose2d initialPoseSpline = new Pose2d(0,0,0);
+        MecanumDrive drive = new MecanumDrive(hardwareMap, initialPoseSpline);
         Intake intake = new Intake(hardwareMap);
         BucketMovement bucketMovement = new BucketMovement(hardwareMap);
         VerticalExtension verticalExtender = new VerticalExtension(hardwareMap);
@@ -499,9 +500,16 @@ public class blueAutoLeft extends LinearOpMode {
         while (opModeIsActive()) {
             Actions.runBlocking(
                     new SequentialAction(
-                            splineTestAction
+                        drive.actionBuilder(new Pose2d(0,0,0))
+                            .splineTo(new Vector2d(48, 48), Math.PI / 2)
+                            .build(),
+                        intake.clawServoDown(),
+                        drive.actionBuilder(new Pose2d(48, 48, Math.PI / 2))
+                            .splineTo(new Vector2d(0, 0), 0)
+                            .build()
                     )
             );
+
             /*
             Actions.runBlocking(
                     new SequentialAction(
