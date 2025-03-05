@@ -7,12 +7,15 @@ import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
+
+import java.util.Base64;
 import java.util.concurrent.TimeUnit;
 import org.firstinspires.ftc.robotcore.external.JavaUtil;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import java.util.concurrent.TimeUnit;
 import java.lang.Math;
+import java.util.HashMap;
 
 
 @TeleOp(name = "mainCodeV1")
@@ -25,10 +28,15 @@ public class testerScript extends LinearOpMode {
     private DcMotor frontLeft;
     private DcMotor horizontalExtender;
 
+
+
     private DcMotor intakeMotor;
     private DcMotor verticalExtender;
     private Servo clawServo;
     private Servo bucketServo;
+
+    private DcMotor servoTrackerEncoder1;
+
     int horizontalExtenderMIN;
     int horizontalExtenderMAX;
     int verticalExtenderMIN;
@@ -42,9 +50,12 @@ public class testerScript extends LinearOpMode {
 
     private void testServos(Servo[] servoArray, String[] servoTypes, int[] servoTestMovements){
         currentTestGroup = "Servos";
-
+        HashMap<Integer, Integer> servoData = new HashMap<Integer, Integer>();
         for (int s = 0; s < servoArray.length; s++){
             Servo servoToTest = servoArray[s];
+            long encoderStop = 1; //what encoder value to stop recording data at.
+            int lastDataPoint = 0;
+            int dataPoint = 0;
 
             telemetry.addData("Testing Servo (port #): ", servoToTest.getPortNumber());
             telemetry.addData("Servo Type: ", servoTypes[s]);
@@ -52,10 +63,21 @@ public class testerScript extends LinearOpMode {
 
             servoToTest.setPosition(servoTestMovements[s]);
 
+            while(servoTrackerEncoder1.getCurrentPosition() <= encoderStop){
+
+                long time = System.currentTimeMillis();
+
+                if ( time - lastDataPoint >= 100){
+                    servoData.put(dataPoint, servoTrackerEncoder1.getCurrentPosition());
+                    dataPoint++;
+                }
+
+            }
+
         }
     }
 
-    
+
 
     private void printThings() {
         telemetry.addData("Test Group: ", currentTestGroup);
@@ -64,6 +86,8 @@ public class testerScript extends LinearOpMode {
 
 
     private void hardwareMapping() {
+
+
         imu = hardwareMap.get(IMU.class, "imu");
         backRight = hardwareMap.get(DcMotor.class, "backRight");
         frontRight = hardwareMap.get(DcMotor.class, "frontRight");
@@ -75,6 +99,9 @@ public class testerScript extends LinearOpMode {
         horizontalExtender = hardwareMap.get(DcMotor.class, "horizontalExtender");
         bucketServo = hardwareMap.get(Servo.class, "bucketServo");
         intakeMotor = hardwareMap.get(DcMotor.class, "intake/parallel");
+
+        servoTrackerEncoder1 = hardwareMap.get(DcMotor.class, "servoTracker1");
+
 
         Servo[] servoList = {
                 clawServo,
