@@ -1,10 +1,13 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
+import com.acmerobotics.roadrunner.ftc.RawEncoder;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 
@@ -15,6 +18,19 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import java.util.concurrent.TimeUnit;
 import java.lang.Math;
+
+import com.acmerobotics.roadrunner.ftc.Encoder;
+import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
+import com.acmerobotics.roadrunner.ftc.PositionVelocityPair;
+import com.acmerobotics.roadrunner.ftc.RawEncoder;
+import com.acmerobotics.roadrunner.DualNum;
+import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.PoseVelocity2d;
+import com.acmerobotics.roadrunner.Rotation2d;
+import com.acmerobotics.roadrunner.Time;
+import com.acmerobotics.roadrunner.Twist2dDual;
+import com.acmerobotics.roadrunner.Vector2d;
+import com.acmerobotics.roadrunner.Vector2dDual;
 import java.util.HashMap;
 
 
@@ -35,7 +51,8 @@ public class testerScript extends LinearOpMode {
     private Servo clawServo;
     private Servo bucketServo;
 
-    private DcMotor servoTrackerEncoder1;
+    private Encoder servoEncoder;
+    private double servoEncoder1Pos = 0;
 
     int horizontalExtenderMIN;
     int horizontalExtenderMAX;
@@ -50,10 +67,10 @@ public class testerScript extends LinearOpMode {
 
     private void testServos(Servo[] servoArray, String[] servoTypes, int[] servoTestMovements){
         currentTestGroup = "Servos";
-        HashMap<Integer, Integer> servoData = new HashMap<Integer, Integer>();
+        HashMap<long[], Double> servoData = new HashMap<long[], Double>();
         for (int s = 0; s < servoArray.length; s++){
             Servo servoToTest = servoArray[s];
-            long encoderStop = 1; //what encoder value to stop recording data at.
+            double encoderStop = 1.5; //what encoder value to stop recording data at. I think somewhere around 1.5 is good because the servo should do less than 1 full rotation
             int lastDataPoint = 0;
             int dataPoint = 0;
 
@@ -61,14 +78,24 @@ public class testerScript extends LinearOpMode {
             telemetry.addData("Servo Type: ", servoTypes[s]);
             telemetry.addData("Moving Servo To:", servoTestMovements[s]);
 
+
             servoToTest.setPosition(servoTestMovements[s]);
 
-            while(servoTrackerEncoder1.getCurrentPosition() <= encoderStop){
+            PositionVelocityPair data = servoEncoder.getPositionAndVelocity();
+
+
+
+            while(servoEncoder1Pos <= encoderStop){
 
                 long time = System.currentTimeMillis();
 
-                if ( time - lastDataPoint >= 100){
-                    servoData.put(dataPoint, servoTrackerEncoder1.getCurrentPosition());
+                if ( time - lastDataPoint >= 100 ){
+
+                    long[] datapointTime = {dataPoint, time};
+
+
+
+                    servoData.put(datapointTime, servoEncoder1Pos);
                     dataPoint++;
                 }
 
@@ -100,7 +127,9 @@ public class testerScript extends LinearOpMode {
         bucketServo = hardwareMap.get(Servo.class, "bucketServo");
         intakeMotor = hardwareMap.get(DcMotor.class, "intake/parallel");
 
-        servoTrackerEncoder1 = hardwareMap.get(DcMotor.class, "servoTracker1");
+        servoEncoder = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "servoEncoder1")));
+
+        //servoTrackerEncoder1 = hardwareMap.get(DcMotor.class, "servoTracker1");
 
 
         Servo[] servoList = {
