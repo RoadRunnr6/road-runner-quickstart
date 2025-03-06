@@ -79,6 +79,7 @@ public class testerScript extends LinearOpMode {
             telemetry.addData("Moving Servo To:", servoTestMovements[s]);
 
 
+
             servoToTest.setPosition(servoTestMovements[s]);
 
             PositionVelocityPair data = servoEncoder.getPositionAndVelocity();
