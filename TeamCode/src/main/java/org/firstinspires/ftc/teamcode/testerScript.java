@@ -92,9 +92,7 @@ public class testerScript extends LinearOpMode {
                 if ( time - lastDataPoint >= 100 ){
 
                     long[] datapointTime = {dataPoint, time};
-
-
-
+                    
                     servoData.put(datapointTime, servoEncoder1Pos);
                     dataPoint++;
                 }
